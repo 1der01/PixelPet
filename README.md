@@ -217,5 +217,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Designed as a portfolio project demonstrating clean architecture and polished UX
 
 ---
-
-Made with ❤️ by [Your Name]
