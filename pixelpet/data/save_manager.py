@@ -1,0 +1,90 @@
+"""Save manager for PixelPet - handles JSON persistence."""
+import json
+import os
+import time
+from pathlib import Path
+
+
+class SaveManager:
+    """Manages saving and loading pet data."""
+
+    def __init__(self, save_dir=None):
+        if save_dir is None:
+            # Use user's home directory for saves
+            self.save_dir = Path.home() / ".pixelpet"
+        else:
+            self.save_dir = Path(save_dir)
+
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+        self.save_file = self.save_dir / "pet_save.json"
+        self.settings_file = self.save_dir / "settings.json"
+
+    def save_pet(self, pet):
+        """Save pet data to JSON file."""
+        try:
+            data = pet.to_dict()
+            data["last_saved"] = int(time.time())
+            with open(self.save_file, "w") as f:
+                json.dump(data, f, indent=2)
+            return True
+        except Exception as e:
+            print(f"Error saving pet: {e}")
+            return False
+
+    def load_pet(self):
+        """Load pet data from JSON file."""
+        try:
+            if not self.save_file.exists():
+                return None
+
+            with open(self.save_file, "r") as f:
+                data = json.load(f)
+
+            return data
+        except json.JSONDecodeError:
+            print("Corrupted save file, will create new pet")
+            return None
+        except Exception as e:
+            print(f"Error loading pet: {e}")
+            return None
+
+    def save_settings(self, settings):
+        """Save settings to JSON file."""
+        try:
+            with open(self.settings_file, "w") as f:
+                json.dump(settings, f, indent=2)
+            return True
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+            return False
+
+    def load_settings(self):
+        """Load settings from JSON file."""
+        try:
+            if not self.settings_file.exists():
+                return None
+
+            with open(self.settings_file, "r") as f:
+                data = json.load(f)
+
+            return data
+        except json.JSONDecodeError:
+            print("Corrupted settings file, will use defaults")
+            return None
+        except Exception as e:
+            print(f"Error loading settings: {e}")
+            return None
+
+    def delete_save(self):
+        """Delete save file."""
+        try:
+            if self.save_file.exists():
+                self.save_file.unlink()
+            return True
+        except Exception as e:
+            print(f"Error deleting save: {e}")
+            return False
+
+    def has_save(self):
+        """Check if save file exists."""
+        return self.save_file.exists()
