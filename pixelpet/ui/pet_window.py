@@ -1,4 +1,5 @@
 """Main pet window for PixelPet."""
+import math
 from PySide6.QtWidgets import (
     QWidget,
     QLabel,
@@ -19,6 +20,14 @@ class PetWindow(QWidget):
         self.pet = pet
         self.settings = settings
         self.interaction_callback = None
+
+        # Animation state
+        self.anim_time = 0
+        self.blink_timer = 0
+        self.is_blinking = False
+        self.original_pos = None
+        self.is_dragging = False
+
         self.setup_ui()
         self.setup_timers()
 
@@ -87,8 +96,43 @@ class PetWindow(QWidget):
 
     def update_animation(self):
         """Update animations."""
-        # Placeholder for animation updates
-        pass
+        # Get animation intensity from settings (0.0 to 2.0)
+        intensity = self.settings.get("animation_intensity", 1.0)
+        if intensity <= 0:
+            return
+
+        self.anim_time += 0.1 * intensity
+
+        # Breathing animation (subtle scale)
+        breath_scale = 1.0 + (0.02 * intensity * math.sin(self.anim_time * 0.5))
+        self.pet_label.setStyleSheet(
+            f"""
+            QLabel {{
+                color: white;
+                background-color: transparent;
+                transform: scale({breath_scale});
+            }}
+        """
+        )
+
+        # Bouncing animation (subtle vertical movement)
+        bounce_offset = int(3 * intensity * math.sin(self.anim_time * 0.8))
+        if self.original_pos is None:
+            self.original_pos = self.pos()
+        new_pos = self.original_pos + QPoint(0, bounce_offset)
+        self.move(new_pos)
+
+        # Blinking animation
+        self.blink_timer += 1
+        if self.blink_timer > 50:  # Blink every ~5 seconds
+            self.blink_timer = 0
+            self.is_blinking = True
+            # Short blink duration
+            QTimer.singleShot(150, self.end_blink)
+
+        # Apply blinking to expression
+        if self.is_blinking:
+            self.apply_blink()
 
     def update_pet_display(self):
         """Update the pet's visual display."""
@@ -111,12 +155,22 @@ class PetWindow(QWidget):
         """Handle mouse press for dragging and interactions."""
         if event.button() == Qt.LeftButton:
             self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self.is_dragging = True
             event.accept()
 
     def mouseMoveEvent(self, event):
         """Handle mouse move for dragging."""
-        if event.buttons() == Qt.LeftButton:
-            self.move(event.globalPosition().toPoint() - self.drag_position)
+        if event.buttons() == Qt.LeftButton and self.is_dragging:
+            new_pos = event.globalPosition().toPoint() - self.drag_position
+            self.move(new_pos)
+            self.original_pos = new_pos  # Update original position during drag
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        """Handle mouse release."""
+        if event.button() == Qt.LeftButton:
+            self.is_dragging = False
+            self.original_pos = self.pos()  # Set final position as original
             event.accept()
 
     def mouseDoubleClickEvent(self, event):
@@ -145,4 +199,26 @@ class PetWindow(QWidget):
         opacity = settings.get("pet_transparency", 255) / 255.0
         self.setWindowOpacity(opacity)
 
+        # Update original position for animation
+        if self.original_pos is None:
+            self.original_pos = self.pos()
+
         self.show()
+
+    def apply_blink(self):
+        """Apply blinking effect to pet expression."""
+        current_art = self.pet.get_ascii_art()
+        # Replace eyes with closed eyes (- -)
+        blink_art = current_art.replace("( o . o )", "( - . - )")
+        blink_art = blink_art.replace("( O . O )", "( - . - )")
+        blink_art = blink_art.replace("( ^ _ ^ )", "( - _ - )")
+        blink_art = blink_art.replace("( > w < )", "( - w - )")
+        blink_art = blink_art.replace("( # . # )", "( - . - )")
+        blink_art = blink_art.replace("( @ . @ )", "( - . - )")
+        blink_art = blink_art.replace("( T . T )", "( - . - )")
+        self.pet_label.setText(blink_art)
+
+    def end_blink(self):
+        """End blinking effect."""
+        self.is_blinking = False
+        self.update_pet_display()
