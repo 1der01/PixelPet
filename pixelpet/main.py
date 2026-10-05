@@ -148,10 +148,9 @@ class PixelPetApp(QObject):
             # Handle action result
             result = data.get("result", "")
             if result:
-                # Show speech bubble with result
+                # Show speech bubble with result (pass pet position and size)
                 pos = self.pet_window.pos()
-                bubble_pos = pos + self.pet_window.rect().topLeft() - QPoint(0, 90)
-                self.speech_bubble.show_message(result, bubble_pos)
+                self.speech_bubble.show_message(result, pos, self.pet_window.size())
 
             # Save after action
             self.save_manager.save_pet(self.pet)
@@ -164,9 +163,9 @@ class PixelPetApp(QObject):
             event = data.get("event", {})
 
             if message:
+                # Show speech bubble with event message (pass pet position and size)
                 pos = self.pet_window.pos()
-                bubble_pos = pos + self.pet_window.rect().topLeft() - QPoint(0, 90)
-                self.speech_bubble.show_message(message, bubble_pos)
+                self.speech_bubble.show_message(message, pos, self.pet_window.size())
 
         elif event_type == "update_tray":
             # Update tray tooltip
@@ -203,12 +202,12 @@ class PixelPetApp(QObject):
         self.pet.reset()
         self.save_manager.save_pet(self.pet)
         self.pet_window.update_pet_display()
-        self.speech_bubble.show_message("Pet reset!", self.pet_window.pos())
+        self.speech_bubble.show_message("Pet reset!", self.pet_window.pos(), self.pet_window.size())
 
     def manual_save(self):
         """Manually save pet state."""
         if self.save_manager.save_pet(self.pet):
-            self.speech_bubble.show_message("Saved!", self.pet_window.pos())
+            self.speech_bubble.show_message("Saved!", self.pet_window.pos(), self.pet_window.size())
 
     def auto_save(self):
         """Auto-save pet state."""

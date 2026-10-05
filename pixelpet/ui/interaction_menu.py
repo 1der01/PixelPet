@@ -5,8 +5,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QLabel,
     QFrame,
+    QGraphicsOpacityEffect,
 )
-from PySide6.QtCore import Qt, QPoint, QTimer
+from PySide6.QtCore import Qt, QPoint, QTimer, QPropertyAnimation, QEasingCurve
 from PySide6.QtGui import QFont
 
 
@@ -110,35 +111,44 @@ class InteractionMenu(QWidget):
 
 
 class SpeechBubble(QWidget):
-    """Speech bubble for pet dialogue."""
+    """Speech bubble for pet dialogue with animations and smart positioning."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setup_ui()
+        self.fade_animation = None
+        self.hide_timer = None
 
     def setup_ui(self):
         """Setup the speech bubble UI."""
         self.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # Create bubble
+        # Create bubble with better styling
         self.bubble = QFrame()
         self.bubble.setStyleSheet(
             """
             QFrame {
-                background-color: rgba(255, 255, 255, 240);
-                border-radius: 15px;
-                border: 2px solid rgba(0, 0, 0, 0.1);
+                background-color: rgba(255, 255, 255, 250);
+                border-radius: 20px;
+                border: 2px solid rgba(100, 100, 100, 0.2);
             }
         """
         )
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(15, 15, 15, 15)
+        layout.setContentsMargins(20, 20, 20, 20)
 
         self.label = QLabel()
-        self.label.setFont(QFont("Arial", 9))
-        self.label.setStyleSheet("color: #333;")
+        self.label.setFont(QFont("Segoe UI", 10))
+        self.label.setStyleSheet(
+            """
+            QLabel {
+                color: #2C3E50;
+                background-color: transparent;
+            }
+        """
+        )
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.label)
@@ -150,15 +160,101 @@ class SpeechBubble(QWidget):
         main_layout.addWidget(self.bubble)
         self.setLayout(main_layout)
 
-        self.setFixedSize(200, 80)
+        # Setup opacity effect for fade animations
+        self.opacity_effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.opacity_effect)
+        self.opacity_effect.setOpacity(0)
 
-    def show_message(self, message, pos):
-        """Show a message at the specified position."""
+    def calculate_position(self, pet_pos, pet_size):
+        """Calculate smart position for speech bubble avoiding screen edges."""
+        screen = self.screen() if hasattr(self, 'screen') else None
+        if not screen:
+            from PySide6.QtWidgets import QApplication
+            screen = QApplication.primaryScreen()
+
+        if not screen:
+            return pet_pos + QPoint(0, -100)
+
+        screen_geometry = screen.availableGeometry()
+
+        # Default position: above pet
+        bubble_width = 250
+        bubble_height = 80
+        x = pet_pos.x() + pet_size.width() // 2 - bubble_width // 2
+        y = pet_pos.y() - bubble_height - 20
+
+        # Check if bubble would go off the top
+        if y < screen_geometry.top():
+            # Position below pet instead
+            y = pet_pos.y() + pet_size.height() + 20
+
+        # Check if bubble would go off the left
+        if x < screen_geometry.left():
+            x = screen_geometry.left() + 10
+
+        # Check if bubble would go off the right
+        if x + bubble_width > screen_geometry.right():
+            x = screen_geometry.right() - bubble_width - 10
+
+        return QPoint(x, y)
+
+    def show_message(self, message, pet_pos, pet_size=None):
+        """Show a message with fade-in animation at smart position."""
+        # Cancel any existing hide timer
+        if self.hide_timer:
+            self.hide_timer.stop()
+
+        # Set message and calculate size
         self.label.setText(message)
+        self.label.adjustSize()
+
+        # Calculate bubble size based on text
+        text_width = self.label.sizeHint().width()
+        text_height = self.label.sizeHint().height()
+
+        bubble_width = max(200, min(350, text_width + 40))
+        bubble_height = max(60, min(120, text_height + 40))
+
+        self.setFixedSize(bubble_width, bubble_height)
+
+        # Calculate smart position
+        if pet_size:
+            pos = self.calculate_position(pet_pos, pet_size)
+        else:
+            pos = pet_pos + QPoint(0, -100)
+
         self.move(pos)
-        self.show()
+
+        # Fade in animation
+        self.fade_in()
 
         # Auto-hide after 5 seconds
         self.hide_timer = QTimer()
-        self.hide_timer.timeout.connect(self.hide)
+        self.hide_timer.timeout.connect(self.fade_out)
         self.hide_timer.start(5000)
+
+    def fade_in(self):
+        """Fade in the speech bubble."""
+        self.show()
+        self.fade_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.fade_animation.setDuration(300)
+        self.fade_animation.setStartValue(0)
+        self.fade_animation.setEndValue(1)
+        self.fade_animation.setEasingCurve(QEasingCurve.OutCubic)
+        self.fade_animation.start()
+
+    def fade_out(self):
+        """Fade out the speech bubble."""
+        self.fade_animation = QPropertyAnimation(self.opacity_effect, b"opacity")
+        self.fade_animation.setDuration(300)
+        self.fade_animation.setStartValue(1)
+        self.fade_animation.setEndValue(0)
+        self.fade_animation.setEasingCurve(QEasingCurve.InCubic)
+        self.fade_animation.finished.connect(self.hide)
+        self.fade_animation.start()
+
+    def hide_message(self):
+        """Hide the speech bubble immediately with fade out."""
+        if self.hide_timer:
+            self.hide_timer.stop()
+        self.fade_out()
