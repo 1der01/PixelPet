@@ -24,12 +24,12 @@ class MoodSystem:
             return "Sleepy"
         if stats.cleanliness < 30:
             return "Dirty"
+        if stats.happiness < 20:
+            return "Angry"
         if stats.happiness < 30:
             return "Sad"
         if stats.happiness > 80 and stats.energy > 70:
             return "Excited"
-        if stats.happiness < 20:
-            return "Angry"
         if stats.happiness > 70:
             return "Happy"
         return "Normal"

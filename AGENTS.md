@@ -9,13 +9,26 @@ python main.py
 
 ## Testing
 
-Core logic tests can be run by importing and testing individual modules:
-- `pixelpet.core.pet` - Pet class and game logic
-- `pixelpet.core.stats` - Stat management
-- `pixelpet.core.mood` - Mood calculation
-- `pixelpet.core.progression` - Level and XP system
-- `pixelpet.core.sound` - Sound effects system
-- `pixelpet.data.save_manager` - Save/load functionality
+Run all unit tests:
+```bash
+python -m unittest discover tests/ -v
+```
+
+Run specific test file:
+```bash
+python -m unittest tests.test_stats
+python -m unittest tests.test_pet
+```
+
+Test coverage includes:
+- `tests/test_stats.py` - Stat management (11 tests)
+- `tests/test_mood.py` - Mood calculation (13 tests)
+- `tests/test_progression.py` - Level and XP system (13 tests)
+- `tests/test_pet.py` - Pet class and game logic (23 tests)
+- `tests/test_events.py` - Random event system (13 tests)
+- `tests/test_save_manager.py` - Save/load functionality (13 tests)
+
+Total: 86 tests (all passing)
 
 ## Save Data Location
 
@@ -29,6 +42,7 @@ Save data is stored in the user's home directory:
 - `pixelpet/ui/` - UI components (pet window, interaction menu, setup window, settings window)
 - `pixelpet/data/` - Data management (save manager, default data)
 - `pixelpet/assets/` - Art and sound assets (pets, icons, sounds)
+- `tests/` - Unit tests for core systems
 
 ## Key Features Implemented
 
@@ -45,6 +59,7 @@ Save data is stored in the user's home directory:
 - Auto-save every minute
 - Settings dialog with various options
 - Pet reset functionality
+- Comprehensive unit test coverage (86 tests)
 
 ## Dependencies
 
@@ -62,3 +77,5 @@ Save data is stored in the user's home directory:
 - To add actual sound files, place WAV files in `pixelpet/assets/sounds/`:
   - feed.wav, pet.wav, play.wav, clean.wav, sleep.wav
   - event.wav, level_up.wav, notification.wav
+- All core game logic is tested with unit tests
+- Tests use Python's built-in unittest framework
