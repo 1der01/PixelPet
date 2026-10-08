@@ -105,46 +105,67 @@ class Pet:
         if self.is_sleeping:
             self.wake_up()
         self.stats.modify(hunger=15, happiness=5)
-        self.progression.add_experience(5)
+        leveled_up = self.progression.add_experience(5)
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
-        return f"You fed {self.name}! Yum!"
+        result = f"You fed {self.name}! Yum!"
+        if leveled_up:
+            result += f" Level up! Now level {self.progression.level}!"
+        return result, "feed", leveled_up
 
     def pet(self):
         """Pet the pet."""
         if self.is_sleeping:
             self.wake_up()
         self.stats.modify(happiness=10)
-        self.progression.add_experience(2)
+        leveled_up = self.progression.add_experience(2)
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
-        return f"You petted {self.name}! So cute!"
+        result = f"You petted {self.name}! So cute!"
+        if leveled_up:
+            result += f" Level up! Now level {self.progression.level}!"
+        return result, "pet", leveled_up
 
     def play(self):
         """Play with the pet."""
         if self.is_sleeping:
             self.wake_up()
         self.stats.modify(happiness=15, energy=-10)
-        self.progression.add_experience(10)
+        leveled_up = self.progression.add_experience(10)
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
-        return f"You played with {self.name}! Fun!"
+        result = f"You played with {self.name}! Fun!"
+        if leveled_up:
+            result += f" Level up! Now level {self.progression.level}!"
+        return result, "play", leveled_up
 
     def clean(self):
         """Clean the pet."""
         if self.is_sleeping:
             self.wake_up()
         self.stats.modify(cleanliness=20, happiness=5)
-        self.progression.add_experience(5)
+        leveled_up = self.progression.add_experience(5)
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
-        return f"You cleaned {self.name}! Sparkling!"
+        result = f"You cleaned {self.name}! Sparkling!"
+        if leveled_up:
+            result += f" Level up! Now level {self.progression.level}!"
+        return result, "clean", leveled_up
 
     def sleep(self):
         """Put the pet to sleep."""
         self.is_sleeping = True
         self.activity_monitor.record_activity()
-        return f"{self.name} is now sleeping..."
+        return f"{self.name} is now sleeping...", "sleep", False
+
+    def wake_up(self):
+        """Wake the pet up."""
+        if self.is_sleeping:
+            self.stats.modify(energy=30)
+            self.mood = MoodSystem.calculate_mood(self.stats)
+            self.is_sleeping = False
+            return f"{self.name} woke up!", "notification", False
+        return f"{self.name} is already awake!", None, False
 
     def wake_up(self):
         """Wake the pet up."""

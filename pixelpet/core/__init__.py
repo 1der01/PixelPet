@@ -5,6 +5,7 @@ from .mood import MoodSystem
 from .progression import Progression
 from .events import EventSystem
 from .activity_monitor import ActivityMonitor
+from .sound import SoundSystem
 
 __all__ = [
     "Pet",
@@ -13,4 +14,5 @@ __all__ = [
     "Progression",
     "EventSystem",
     "ActivityMonitor",
+    "SoundSystem",
 ]

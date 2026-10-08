@@ -94,11 +94,21 @@ class InteractionMenu(QWidget):
 
     def perform_action(self, action):
         """Perform an action on the pet."""
-        result = action()
+        result_data = action()
         self.hide()
 
         if self.action_callback:
-            self.action_callback("action", {"result": result})
+            # Handle both old (string) and new (tuple) return values
+            if isinstance(result_data, tuple):
+                result, sound_name, leveled_up = result_data
+                self.action_callback("action", {
+                    "result": result,
+                    "sound": sound_name,
+                    "leveled_up": leveled_up
+                })
+            else:
+                # Backward compatibility
+                self.action_callback("action", {"result": result_data})
 
     def show_at_position(self, pos):
         """Show menu at specified position."""

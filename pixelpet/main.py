@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QIcon, QAction
 
-from .core import Pet
+from .core import Pet, SoundSystem
 from .data import SaveManager, DEFAULT_SETTINGS
 from .ui import PetWindow, InteractionMenu, SpeechBubble, SetupWindow, SettingsWindow
 
@@ -24,6 +24,10 @@ class PixelPetApp(QObject):
         self.settings = self.save_manager.load_settings()
         if self.settings is None:
             self.settings = DEFAULT_SETTINGS.copy()
+
+        # Initialize sound system
+        self.sound_system = SoundSystem()
+        self.sound_system.set_enabled(self.settings.get("sound_effects", True))
 
         # Load or create pet
         if self.save_manager.has_save():
@@ -136,6 +140,9 @@ class PixelPetApp(QObject):
         # Start auto-save timer
         self.setup_auto_save()
 
+        # Play notification sound
+        self.sound_system.play("notification")
+
     def handle_interaction(self, event_type, data):
         """Handle interaction events from pet window."""
         if event_type == "menu":
@@ -147,10 +154,21 @@ class PixelPetApp(QObject):
         elif event_type == "action":
             # Handle action result
             result = data.get("result", "")
+            sound_name = data.get("sound", None)
+            leveled_up = data.get("leveled_up", False)
+
             if result:
                 # Show speech bubble with result (pass pet position and size)
                 pos = self.pet_window.pos()
                 self.speech_bubble.show_message(result, pos, self.pet_window.size())
+
+            # Play sound effect
+            if sound_name:
+                self.sound_system.play(sound_name)
+
+            # Play level up sound if pet leveled up
+            if leveled_up:
+                self.sound_system.play("level_up")
 
             # Save after action
             self.save_manager.save_pet(self.pet)
@@ -166,6 +184,9 @@ class PixelPetApp(QObject):
                 # Show speech bubble with event message (pass pet position and size)
                 pos = self.pet_window.pos()
                 self.speech_bubble.show_message(message, pos, self.pet_window.size())
+
+                # Play event sound
+                self.sound_system.play("event")
 
         elif event_type == "update_tray":
             # Update tray tooltip
@@ -197,12 +218,16 @@ class PixelPetApp(QObject):
         self.save_manager.save_settings(self.settings)
         self.pet_window.update_settings(self.settings)
 
+        # Update sound system
+        self.sound_system.set_enabled(self.settings.get("sound_effects", True))
+
     def reset_pet(self):
         """Reset the pet to starting state."""
         self.pet.reset()
         self.save_manager.save_pet(self.pet)
         self.pet_window.update_pet_display()
         self.speech_bubble.show_message("Pet reset!", self.pet_window.pos(), self.pet_window.size())
+        self.sound_system.play("notification")
 
     def manual_save(self):
         """Manually save pet state."""
