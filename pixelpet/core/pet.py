@@ -110,6 +110,7 @@ class Pet:
             self.wake_up()
         self.stats.modify(hunger=15, happiness=5)
         leveled_up = self.progression.add_experience(5)
+        self.progression.record_care_action("feed")
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
         result = f"You fed {self.name}! Yum!"
@@ -123,6 +124,7 @@ class Pet:
             self.wake_up()
         self.stats.modify(happiness=10)
         leveled_up = self.progression.add_experience(2)
+        self.progression.record_care_action("pet")
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
         result = f"You petted {self.name}! So cute!"
@@ -136,6 +138,7 @@ class Pet:
             self.wake_up()
         self.stats.modify(happiness=15, energy=-10)
         leveled_up = self.progression.add_experience(10)
+        self.progression.record_care_action("play")
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
         result = f"You played with {self.name}! Fun!"
@@ -149,6 +152,7 @@ class Pet:
             self.wake_up()
         self.stats.modify(cleanliness=20, happiness=5)
         leveled_up = self.progression.add_experience(5)
+        self.progression.record_care_action("clean")
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.activity_monitor.record_activity()
         result = f"You cleaned {self.name}! Sparkling!"
@@ -202,3 +206,25 @@ class Pet:
             f"Happiness: {'#' * (self.stats.happiness // 10)}{'-' * (10 - self.stats.happiness // 10)} {self.stats.happiness}\n"
             f"Cleanliness: {'#' * (self.stats.cleanliness // 10)}{'-' * (10 - self.stats.cleanliness // 10)} {self.stats.cleanliness}"
         )
+
+    def get_priority_needs(self):
+        """Return the pet's top needs in a clear order so UI can guide actions."""
+        need_map = {
+            "feed": ("Hungry", self.stats.hunger),
+            "clean": ("Needs a bath", self.stats.cleanliness),
+            "sleep": ("Sleepy", self.stats.energy),
+            "pet": ("Needs attention", self.stats.happiness),
+        }
+        order = {"feed": 0, "clean": 1, "sleep": 2, "pet": 3}
+        return [
+            {"id": action, "label": label, "value": value}
+            for action, (label, value) in sorted(
+                need_map.items(), key=lambda item: (item[1][1], order[item[0]])
+            )
+        ]
+
+    def get_need_summary(self):
+        """Return a short text summary of what the pet needs right now."""
+        needs = self.get_priority_needs()
+        top_need = needs[0]
+        return f"{self.name} needs {top_need['label'].lower()} right now."
