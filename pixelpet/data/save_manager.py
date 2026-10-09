@@ -1,6 +1,8 @@
 """Save manager for PixelPet - handles JSON persistence."""
 import json
 import os
+import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -19,14 +21,44 @@ class SaveManager:
         self.save_file = self.save_dir / "pet_save.json"
         self.settings_file = self.save_dir / "settings.json"
 
+    def _backup_file(self, file_path):
+        """Create a backup copy before overwriting a JSON save file."""
+        if file_path.exists():
+            backup_path = file_path.with_name(f"{file_path.name}.bak")
+            shutil.copy2(file_path, backup_path)
+        return file_path.with_name(f"{file_path.name}.bak")
+
+    def _atomic_write_json(self, file_path, payload):
+        """Write JSON payload safely so data is not lost on a crash or interruption."""
+        self._backup_file(file_path)
+
+        temp_path = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                "w",
+                dir=str(file_path.parent),
+                prefix=f"{file_path.name}.",
+                suffix=".tmp",
+                delete=False,
+                encoding="utf-8",
+            ) as temp_file:
+                json.dump(payload, temp_file, indent=2)
+                temp_path = Path(temp_file.name)
+
+            os.replace(temp_path, file_path)
+            return True
+        except Exception as exc:
+            print(f"Error saving {file_path.name}: {exc}")
+            if temp_path and temp_path.exists():
+                temp_path.unlink(missing_ok=True)
+            return False
+
     def save_pet(self, pet):
         """Save pet data to JSON file."""
         try:
             data = pet.to_dict()
             data["last_saved"] = int(time.time())
-            with open(self.save_file, "w") as f:
-                json.dump(data, f, indent=2)
-            return True
+            return self._atomic_write_json(self.save_file, data)
         except Exception as e:
             print(f"Error saving pet: {e}")
             return False
@@ -51,9 +83,7 @@ class SaveManager:
     def save_settings(self, settings):
         """Save settings to JSON file."""
         try:
-            with open(self.settings_file, "w") as f:
-                json.dump(settings, f, indent=2)
-            return True
+            return self._atomic_write_json(self.settings_file, settings)
         except Exception as e:
             print(f"Error saving settings: {e}")
             return False

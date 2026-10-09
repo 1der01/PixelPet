@@ -62,7 +62,7 @@ class Pet:
     @classmethod
     def from_dict(cls, data):
         """Create Pet from dictionary."""
-        return cls(
+        pet = cls(
             name=data.get("name", "Mochi"),
             species=data.get("species", "Cat"),
             personality=data.get("personality"),
@@ -70,6 +70,10 @@ class Pet:
             progression=Progression.from_dict(data.get("progression", {})),
             age=data.get("age", 0),
         )
+        pet.mood = data.get("mood", MoodSystem.calculate_mood(pet.stats))
+        pet.is_sleeping = data.get("is_sleeping", False)
+        pet.created_time = data.get("created_time", pet.created_time)
+        return pet
 
     def update(self, dt):
         """Update pet state."""
@@ -166,15 +170,6 @@ class Pet:
             self.is_sleeping = False
             return f"{self.name} woke up!", "notification", False
         return f"{self.name} is already awake!", None, False
-
-    def wake_up(self):
-        """Wake the pet up."""
-        if self.is_sleeping:
-            self.stats.modify(energy=30)
-            self.mood = MoodSystem.calculate_mood(self.stats)
-            self.is_sleeping = False
-            return f"{self.name} woke up!"
-        return f"{self.name} is already awake!"
 
     def reset(self):
         """Reset pet to starting state."""
