@@ -283,7 +283,7 @@ class PixelPetApp(QObject):
 
     def show_settings(self):
         """Show settings window."""
-        self.settings_window = SettingsWindow(self.settings)
+        self.settings_window = SettingsWindow(self.settings, save_manager=self.save_manager)
         self.settings_window.set_settings_saved_callback(self.update_settings)
         self.settings_window.set_pet_reset_callback(self.reset_pet)
         self.settings_window.show()

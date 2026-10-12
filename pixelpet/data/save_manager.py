@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import time
+from datetime import datetime
 from pathlib import Path
 
 
@@ -18,15 +19,96 @@ class SaveManager:
             self.save_dir = Path(save_dir)
 
         self.save_dir.mkdir(parents=True, exist_ok=True)
+        self.backup_dir = self.save_dir / "backups"
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
         self.save_file = self.save_dir / "pet_save.json"
         self.settings_file = self.save_dir / "settings.json"
 
     def _backup_file(self, file_path):
         """Create a backup copy before overwriting a JSON save file."""
         if file_path.exists():
-            backup_path = file_path.with_name(f"{file_path.name}.bak")
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S_%f")
+            backup_path = self.backup_dir / f"{file_path.name}.{timestamp}.bak"
             shutil.copy2(file_path, backup_path)
-        return file_path.with_name(f"{file_path.name}.bak")
+
+            # Keep a quick-access latest backup for simple restore flows.
+            latest_backup = file_path.with_name(f"{file_path.name}.bak")
+            shutil.copy2(file_path, latest_backup)
+            return backup_path
+        return None
+
+    def backup_file(self, file_path):
+        """Create a timestamped backup for a save file and return its path."""
+        if not file_path.exists():
+            return None
+
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S_%f")
+        backup_path = self.backup_dir / f"{file_path.name}.{timestamp}.bak"
+        shutil.copy2(file_path, backup_path)
+
+        latest_backup = file_path.with_name(f"{file_path.name}.bak")
+        shutil.copy2(file_path, latest_backup)
+        return backup_path
+
+    def restore_backup(self, file_path, backup_path=None):
+        """Restore a save file from its latest backup or an explicit backup path."""
+        if backup_path is None:
+            backup_path = self.get_latest_backup(file_path)
+
+        backup_path = Path(backup_path)
+        if not backup_path.exists():
+            return False
+
+        shutil.copy2(backup_path, file_path)
+        return True
+
+    def get_latest_backup(self, file_path):
+        """Return the newest backup for the given save file."""
+        pattern = f"{file_path.name}.*.bak"
+        backup_candidates = sorted(self.backup_dir.glob(pattern), key=lambda path: path.stat().st_mtime, reverse=True)
+        if backup_candidates:
+            return backup_candidates[0]
+
+        latest_backup = file_path.with_name(f"{file_path.name}.bak")
+        if latest_backup.exists():
+            return latest_backup
+        return None
+
+    def backup_pet_save(self):
+        """Create a manual backup of the current pet save."""
+        return self.backup_file(self.save_file)
+
+    def restore_pet_backup(self, backup_path=None):
+        """Restore the pet save from the latest backup."""
+        return self.restore_backup(self.save_file, backup_path)
+
+    def export_save(self, file_path, save_type="pet"):
+        """Export a save file to another location without altering the current save."""
+        source = self.save_file if save_type == "pet" else self.settings_file
+        if not source.exists():
+            return None
+
+        destination = Path(file_path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination)
+        return destination
+
+    def import_save(self, file_path, save_type="pet"):
+        """Import a save file from another location, creating a backup beforehand."""
+        source = Path(file_path)
+        if not source.exists():
+            return False
+
+        target = self.save_file if save_type == "pet" else self.settings_file
+        try:
+            with open(source, "r", encoding="utf-8") as imported_file:
+                json.load(imported_file)
+        except (OSError, ValueError):
+            return False
+
+        self._backup_file(target)
+        shutil.copy2(source, target)
+        return True
 
     def _atomic_write_json(self, file_path, payload):
         """Write JSON payload safely so data is not lost on a crash or interruption."""

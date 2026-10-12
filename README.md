@@ -194,6 +194,8 @@ Access settings via the system tray menu:
 - **Notifications**: Enable/disable event notifications
 - **Pet Transparency**: Adjust the pet window's opacity
 - **Animation Intensity**: Control animation speed/intensity
+- **Backup Save / Restore**: Keep a local recovery point and restore from the latest snapshot
+- **Export / Import Save**: Copy your pet save to another location or restore a previous JSON export
 - **Reset Pet**: Start fresh with a new pet (with confirmation)
 
 ## Future Improvements

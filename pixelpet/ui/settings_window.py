@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFrame,
     QMessageBox,
+    QFileDialog,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -17,9 +18,10 @@ from PySide6.QtGui import QFont
 class SettingsWindow(QWidget):
     """Window for application settings."""
 
-    def __init__(self, settings, parent=None):
+    def __init__(self, settings, save_manager=None, parent=None):
         super().__init__(parent)
         self.settings = settings.copy()
+        self.save_manager = save_manager
         self.settings_saved_callback = None
         self.pet_reset_callback = None
         self.setup_ui()
@@ -213,8 +215,89 @@ class SettingsWindow(QWidget):
         )
         layout.addWidget(self.anim_slider)
 
-        # Reset Pet button
+        # Save management buttons
         layout.addSpacing(20)
+
+        backup_row = QHBoxLayout()
+        backup_btn = QPushButton("Backup Save")
+        backup_btn.setFont(QFont("Arial", 10, QFont.Bold))
+        backup_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #8E44AD;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #7D3C98;
+            }
+        """
+        )
+        backup_btn.clicked.connect(self.backup_save)
+        backup_row.addWidget(backup_btn)
+
+        restore_btn = QPushButton("Restore Backup")
+        restore_btn.setFont(QFont("Arial", 10, QFont.Bold))
+        restore_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #F39C12;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #D68910;
+            }
+        """
+        )
+        restore_btn.clicked.connect(self.restore_latest_backup)
+        backup_row.addWidget(restore_btn)
+        layout.addLayout(backup_row)
+
+        export_row = QHBoxLayout()
+        export_btn = QPushButton("Export Save")
+        export_btn.setFont(QFont("Arial", 10, QFont.Bold))
+        export_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #16A085;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #138D75;
+            }
+        """
+        )
+        export_btn.clicked.connect(self.export_save)
+        export_row.addWidget(export_btn)
+
+        import_btn = QPushButton("Import Save")
+        import_btn.setFont(QFont("Arial", 10, QFont.Bold))
+        import_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #2E86DE;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px;
+            }
+            QPushButton:hover {
+                background-color: #246BB3;
+            }
+        """
+        )
+        import_btn.clicked.connect(self.import_save)
+        export_row.addWidget(import_btn)
+        layout.addLayout(export_row)
+
         reset_btn = QPushButton("Reset Pet")
         reset_btn.setFont(QFont("Arial", 10, QFont.Bold))
         reset_btn.setStyleSheet(
@@ -309,10 +392,88 @@ class SettingsWindow(QWidget):
         """Set callback for pet reset."""
         self.pet_reset_callback = callback
 
+    def backup_save(self):
+        """Create a backup of the current pet save."""
+        if self.save_manager is None:
+            QMessageBox.warning(self, "Backup unavailable", "No save manager is configured.")
+            return
+
+        backup_path = self.save_manager.backup_pet_save()
+        if backup_path:
+            QMessageBox.information(self, "Backup created", f"Backup saved to:\n{backup_path}")
+        else:
+            QMessageBox.warning(self, "Backup failed", "Could not create a save backup.")
+
+    def restore_latest_backup(self):
+        """Restore the latest backup for the pet save."""
+        if self.save_manager is None:
+            QMessageBox.warning(self, "Restore unavailable", "No save manager is configured.")
+            return
+
+        latest_backup = self.save_manager.get_latest_backup(self.save_manager.save_file)
+        if latest_backup is None:
+            QMessageBox.warning(self, "No backup found", "There is no saved backup to restore.")
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "Restore backup",
+            f"Restore from {latest_backup}? This will overwrite your current pet save.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+
+        if reply == QMessageBox.Yes:
+            if self.save_manager.restore_pet_backup(latest_backup):
+                QMessageBox.information(self, "Backup restored", "Your pet save has been restored.")
+            else:
+                QMessageBox.warning(self, "Restore failed", "Could not restore the backup file.")
+
+    def export_save(self):
+        """Export the current pet save to a chosen JSON file."""
+        if self.save_manager is None:
+            QMessageBox.warning(self, "Export unavailable", "No save manager is configured.")
+            return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export PixelPet save",
+            "pixelpet-save.json",
+            "JSON Files (*.json)",
+        )
+
+        if not path:
+            return
+
+        export_path = self.save_manager.export_save(path, save_type="pet")
+        if export_path:
+            QMessageBox.information(self, "Save exported", f"Pet save exported to:\n{export_path}")
+        else:
+            QMessageBox.warning(self, "Export failed", "Could not export the pet save.")
+
+    def import_save(self):
+        """Import a pet save from a chosen JSON file."""
+        if self.save_manager is None:
+            QMessageBox.warning(self, "Import unavailable", "No save manager is configured.")
+            return
+
+        path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Import PixelPet save",
+            "",
+            "JSON Files (*.json)",
+        )
+
+        if not path:
+            return
+
+        if self.save_manager.import_save(path, save_type="pet"):
+            QMessageBox.information(self, "Save imported", "Your pet save was imported successfully.")
+        else:
+            QMessageBox.warning(self, "Import failed", "The selected file is not a valid PixelPet save.")
+
     def reset_pet(self):
         """Reset the pet with confirmation."""
-        from PySide6.QtWidgets import QMessageBox
-
         reply = QMessageBox.question(
             self,
             "Reset Pet",
