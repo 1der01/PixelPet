@@ -19,10 +19,11 @@ from PySide6.QtGui import QFont
 class SettingsWindow(QWidget):
     """Window for application settings."""
 
-    def __init__(self, settings, save_manager=None, parent=None):
+    def __init__(self, settings, save_manager=None, pet=None, parent=None):
         super().__init__(parent)
         self.settings = settings.copy()
         self.save_manager = save_manager
+        self.pet = pet
         self.settings_saved_callback = None
         self.pet_reset_callback = None
         self.setup_ui()
@@ -192,13 +193,36 @@ class SettingsWindow(QWidget):
 
         self.room_furniture_checks = {}
         furniture_options = ["Bed", "Plant", "Toy Box", "Lamp"]
+        available_furniture = (
+            self.pet.progression.get_available_room_furniture() if self.pet is not None else ["Bed", "Plant"]
+        )
         furniture_row = QHBoxLayout()
         for index, item in enumerate(furniture_options):
             checkbox = QCheckBox(item)
+            checkbox.setEnabled(item in available_furniture)
+            if item in available_furniture:
+                checkbox.setToolTip("Unlocked")
+            else:
+                unlock_level = None
+                if self.pet is not None:
+                    unlock_level = next(
+                        (
+                            level
+                            for level, items in sorted(self.pet.progression.ROOM_FURNITURE_UNLOCKS.items())
+                            if item in items
+                        ),
+                        None,
+                    )
+                checkbox.setToolTip(
+                    f"Unlock at level {unlock_level}." if unlock_level is not None else "Locked"
+                )
             checkbox.setStyleSheet(
                 """
                 QCheckBox {
                     color: #ECF0F1;
+                }
+                QCheckBox:disabled {
+                    color: #7F8C8D;
                 }
                 QCheckBox::indicator {
                     width: 16px;
@@ -224,7 +248,12 @@ class SettingsWindow(QWidget):
         if furniture_row.count() > 0:
             layout.addLayout(furniture_row)
 
-        current_furniture = self.settings.get("room_furniture", ["Bed", "Plant"])
+        current_furniture = self.settings.get(
+            "room_furniture",
+            available_furniture,
+        )
+        if self.pet is not None:
+            current_furniture = self.pet.progression.sanitize_room_furniture(current_furniture)
         for item, checkbox in self.room_furniture_checks.items():
             checkbox.setChecked(item in current_furniture)
 
@@ -444,9 +473,16 @@ class SettingsWindow(QWidget):
         self.settings["sound_effects"] = self.sound_effects_cb.isChecked()
         self.settings["notifications"] = self.notifications_cb.isChecked()
         self.settings["room_theme"] = self.room_theme_combo.currentText()
+        available_furniture = (
+            self.pet.progression.get_available_room_furniture() if self.pet is not None else ["Bed", "Plant"]
+        )
         self.settings["room_furniture"] = [
-            item for item, checkbox in self.room_furniture_checks.items() if checkbox.isChecked()
-        ] or ["Bed"]
+            item
+            for item, checkbox in self.room_furniture_checks.items()
+            if checkbox.isChecked() and item in available_furniture
+        ]
+        if not self.settings["room_furniture"]:
+            self.settings["room_furniture"] = [available_furniture[0]] if available_furniture else ["Bed"]
         self.settings["pet_transparency"] = self.transparency_slider.value()
         self.settings["animation_intensity"] = self.anim_slider.value() / 100.0
 

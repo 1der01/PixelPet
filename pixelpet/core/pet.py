@@ -40,7 +40,7 @@ class Pet:
         self.progression = progression or Progression()
         self.age = age
         self.room_theme = room_theme
-        self.room_furniture = room_furniture or ["Bed", "Plant"]
+        self.room_furniture = room_furniture or self.progression.get_available_room_furniture()
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.is_sleeping = False
         self.event_system = EventSystem()
@@ -68,15 +68,16 @@ class Pet:
     @classmethod
     def from_dict(cls, data):
         """Create Pet from dictionary."""
+        progression = Progression.from_dict(data.get("progression", {}))
         pet = cls(
             name=data.get("name", "Mochi"),
             species=data.get("species", "Cat"),
             personality=data.get("personality"),
             stats=Stats.from_dict(data.get("stats", {})),
-            progression=Progression.from_dict(data.get("progression", {})),
+            progression=progression,
             age=data.get("age", 0),
             room_theme=data.get("room_theme", "Cozy"),
-            room_furniture=data.get("room_furniture", ["Bed", "Plant"]),
+            room_furniture=data.get("room_furniture", progression.get_available_room_furniture()),
         )
         pet.mood = data.get("mood", MoodSystem.calculate_mood(pet.stats))
         pet.is_sleeping = data.get("is_sleeping", False)
@@ -188,6 +189,7 @@ class Pet:
         self.stats = Stats()
         self.progression.reset()
         self.age = 0
+        self.room_furniture = self.progression.sanitize_room_furniture(["Bed", "Plant"])
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.is_sleeping = False
         self.event_system = EventSystem()

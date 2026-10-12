@@ -283,7 +283,11 @@ class PixelPetApp(QObject):
 
     def show_settings(self):
         """Show settings window."""
-        self.settings_window = SettingsWindow(self.settings, save_manager=self.save_manager)
+        self.settings_window = SettingsWindow(
+            self.settings,
+            save_manager=self.save_manager,
+            pet=getattr(self, "pet", None),
+        )
         self.settings_window.set_settings_saved_callback(self.update_settings)
         self.settings_window.set_pet_reset_callback(self.reset_pet)
         self.settings_window.show()
@@ -295,7 +299,9 @@ class PixelPetApp(QObject):
 
         if hasattr(self, "pet"):
             self.pet.room_theme = self.settings.get("room_theme", "Cozy")
-            self.pet.room_furniture = self.settings.get("room_furniture", ["Bed", "Plant"])
+            self.pet.room_furniture = self.pet.progression.sanitize_room_furniture(
+                self.settings.get("room_furniture", self.pet.progression.get_available_room_furniture())
+            )
             self.save_manager.save_pet(self.pet)
 
         self.pet_window.update_settings(self.settings)

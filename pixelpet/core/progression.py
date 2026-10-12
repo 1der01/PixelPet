@@ -4,6 +4,12 @@
 class Progression:
     """Manages pet level, experience, unlocks, affection, and care goals."""
 
+    ROOM_FURNITURE_UNLOCKS = {
+        1: ["Bed", "Plant"],
+        2: ["Toy Box"],
+        4: ["Lamp"],
+    }
+
     DEFAULT_GOALS = {
         "feed": {"title": "Feed your pet", "target": 2},
         "pet": {"title": "Give attention", "target": 3},
@@ -73,6 +79,34 @@ class Progression:
         if item is not None and item not in self.inventory:
             raise ValueError(f"Accessory is not in the inventory: {item}")
         self.equipped_accessory = item
+
+    @classmethod
+    def get_room_furniture_unlocks_for_level(cls, level):
+        """Return room furniture the pet can use at a given level."""
+        unlocked = []
+        for unlock_level, items in sorted(cls.ROOM_FURNITURE_UNLOCKS.items()):
+            if level >= unlock_level:
+                unlocked.extend(items)
+        return unlocked
+
+    def get_available_room_furniture(self):
+        """Return furniture unlocked by the pet's current level."""
+        return self.get_room_furniture_unlocks_for_level(self.level)
+
+    def sanitize_room_furniture(self, furniture):
+        """Keep supported room furniture items in selected order and drop unknown extras."""
+        known_furniture = {
+            item for items in self.ROOM_FURNITURE_UNLOCKS.values() for item in items
+        }
+        valid = []
+        for item in furniture or []:
+            if item in known_furniture and item not in valid:
+                valid.append(item)
+        if not valid:
+            available = self.get_available_room_furniture()
+            if available:
+                return [available[0]]
+        return valid
 
     def add_experience(self, amount):
         """Add experience and check for level up."""
