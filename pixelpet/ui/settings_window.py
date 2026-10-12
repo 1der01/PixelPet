@@ -190,22 +190,43 @@ class SettingsWindow(QWidget):
         room_furniture_label.setStyleSheet("color: #ECF0F1;")
         layout.addWidget(room_furniture_label)
 
-        self.room_furniture_combo = QComboBox()
-        self.room_furniture_combo.addItems(["Bed", "Plant", "Toy Box", "Lamp"])
+        self.room_furniture_checks = {}
+        furniture_options = ["Bed", "Plant", "Toy Box", "Lamp"]
+        furniture_row = QHBoxLayout()
+        for index, item in enumerate(furniture_options):
+            checkbox = QCheckBox(item)
+            checkbox.setStyleSheet(
+                """
+                QCheckBox {
+                    color: #ECF0F1;
+                }
+                QCheckBox::indicator {
+                    width: 16px;
+                    height: 16px;
+                }
+                QCheckBox::indicator:checked {
+                    background-color: #3498DB;
+                    border: 2px solid #3498DB;
+                    border-radius: 3px;
+                }
+                QCheckBox::indicator:unchecked {
+                    background-color: #34495E;
+                    border: 2px solid #7F8C8D;
+                    border-radius: 3px;
+                }
+                """
+            )
+            self.room_furniture_checks[item] = checkbox
+            furniture_row.addWidget(checkbox)
+            if index == 1:
+                layout.addLayout(furniture_row)
+                furniture_row = QHBoxLayout()
+        if furniture_row.count() > 0:
+            layout.addLayout(furniture_row)
+
         current_furniture = self.settings.get("room_furniture", ["Bed", "Plant"])
-        self.room_furniture_combo.setCurrentText(current_furniture[0] if current_furniture else "Bed")
-        self.room_furniture_combo.setStyleSheet(
-            """
-            QComboBox {
-                background-color: #34495E;
-                color: #ECF0F1;
-                border: 1px solid #7F8C8D;
-                border-radius: 6px;
-                padding: 8px;
-            }
-            """
-        )
-        layout.addWidget(self.room_furniture_combo)
+        for item, checkbox in self.room_furniture_checks.items():
+            checkbox.setChecked(item in current_furniture)
 
         # Pet transparency
         transparency_label = QLabel("Pet Transparency:")
@@ -423,7 +444,9 @@ class SettingsWindow(QWidget):
         self.settings["sound_effects"] = self.sound_effects_cb.isChecked()
         self.settings["notifications"] = self.notifications_cb.isChecked()
         self.settings["room_theme"] = self.room_theme_combo.currentText()
-        self.settings["room_furniture"] = [self.room_furniture_combo.currentText()]
+        self.settings["room_furniture"] = [
+            item for item, checkbox in self.room_furniture_checks.items() if checkbox.isChecked()
+        ] or ["Bed"]
         self.settings["pet_transparency"] = self.transparency_slider.value()
         self.settings["animation_intensity"] = self.anim_slider.value() / 100.0
 
