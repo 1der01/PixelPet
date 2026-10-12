@@ -1,4 +1,6 @@
 """Interaction menu for PixelPet."""
+from functools import partial
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -58,28 +60,21 @@ class InteractionMenu(QWidget):
         ]
 
         for text, icon, action in buttons:
-            btn = QPushButton(f"{icon} {text}")
-            btn.setFont(QFont("Arial", 9))
-            btn.setStyleSheet(
-                """
-                QPushButton {
-                    background-color: rgba(255, 255, 255, 0.1);
-                    color: white;
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                    border-radius: 8px;
-                    padding: 8px;
-                    min-width: 120px;
-                }
-                QPushButton:hover {
-                    background-color: rgba(255, 255, 255, 0.2);
-                }
-                QPushButton:pressed {
-                    background-color: rgba(255, 255, 255, 0.3);
-                }
-            """
-            )
-            btn.clicked.connect(lambda checked, a=action: self.perform_action(a))
+            btn = self.create_button(f"{icon} {text}")
+            btn.clicked.connect(partial(self.perform_action, action))
             layout.addWidget(btn)
+
+        status_button = self.create_button("📊 My Pet")
+        status_button.clicked.connect(
+            lambda: self.action_callback and self.action_callback("status", None)
+        )
+        layout.addWidget(status_button)
+
+        game_button = self.create_button("🍪 Catch Treats")
+        game_button.clicked.connect(
+            lambda: self.action_callback and self.action_callback("treat_game", None)
+        )
+        layout.addWidget(game_button)
 
         container.setLayout(layout)
 
@@ -90,7 +85,32 @@ class InteractionMenu(QWidget):
         self.setLayout(main_layout)
 
         # Set size
-        self.setFixedSize(180, 280)
+        self.setFixedSize(210, 390)
+
+    @staticmethod
+    def create_button(text):
+        """Create a consistently styled interaction button."""
+        button = QPushButton(text)
+        button.setFont(QFont("Arial", 9))
+        button.setStyleSheet(
+            """
+            QPushButton {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 8px;
+                padding: 8px;
+                min-width: 150px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+            QPushButton:pressed {
+                background-color: rgba(255, 255, 255, 0.3);
+            }
+        """
+        )
+        return button
 
     def perform_action(self, action):
         """Perform an action on the pet."""

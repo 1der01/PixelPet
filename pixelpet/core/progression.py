@@ -73,6 +73,24 @@ class Progression:
             self.check_unlocks()
         return leveled_up
 
+    def award_treat_game(self, score):
+        """Award a bounded XP reward and the one-time high-score cosmetic."""
+        score = max(0, min(10, int(score)))
+        experience = score * 2
+        leveled_up = self.add_experience(experience)
+        item = None
+
+        if score >= 8 and "Golden Bell" not in self.inventory:
+            item = "Golden Bell"
+            self.inventory.append(item)
+
+        return {
+            "score": score,
+            "experience": experience,
+            "leveled_up": leveled_up,
+            "item": item,
+        }
+
     def xp_for_next_level(self):
         """Calculate XP needed for next level."""
         return self.level * 100

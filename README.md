@@ -13,6 +13,8 @@ A cute virtual desktop pet built with Python and PySide6 that lives on your Wind
 - **Personality System**: Each pet has a unique personality that influences dialogue and behavior
 - **Random Events**: Surprise events keep the experience fresh and engaging
 - **Progression System**: Level up your pet through interactions and unlock cosmetic items
+- **Pet Status Panel**: Review needs, XP, care goals, affection, achievements, and accessories
+- **Treat Catch Mini-Game**: Catch treats for XP, with a one-time Golden Bell reward for a high score
 - **Transparent Floating Window**: The pet lives in a frameless, transparent window on your desktop
 - **System Tray Integration**: Minimize to tray, view status, and access settings
 - **Auto-Save**: Your pet's state is automatically saved locally
@@ -142,6 +144,11 @@ Interactions grant experience points:
 - Clean: +5 XP
 
 Level up to unlock cosmetic items like hats, bows, glasses, and more!
+
+Open the interaction menu and choose **My Pet** to view your stats, XP progress,
+care goals, achievements, and unlocked accessories. Choose **Catch Treats** for
+a 20-second mini-game; each treat caught earns 2 XP, up to 20 XP per round.
+Catching at least 8 treats unlocks the Golden Bell accessory once.
 
 ### Random Events
 

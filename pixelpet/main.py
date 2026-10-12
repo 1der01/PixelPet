@@ -1,12 +1,20 @@
 """Main entry point for PixelPet."""
 import sys
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
-from PySide6.QtCore import QObject, Signal
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtCore import QObject, QPointF, Qt
+from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap, QPolygonF
 
 from .core import Pet, SoundSystem
 from .data import SaveManager, DEFAULT_SETTINGS
-from .ui import PetWindow, InteractionMenu, SpeechBubble, SetupWindow, SettingsWindow
+from .ui import (
+    PetWindow,
+    InteractionMenu,
+    SpeechBubble,
+    SetupWindow,
+    SettingsWindow,
+    PetStatusWindow,
+    TreatCatchWindow,
+)
 
 
 class PixelPetApp(QObject):
@@ -69,7 +77,7 @@ class PixelPetApp(QObject):
 
     def setup_tray(self):
         """Setup system tray icon."""
-        self.tray_icon = QSystemTrayIcon()
+        self.tray_icon = QSystemTrayIcon(self.create_tray_icon(), self)
         self.tray_icon.setToolTip(f"PixelPet - {self.pet.name}")
 
         # Create tray menu
@@ -107,6 +115,32 @@ class PixelPetApp(QObject):
 
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
+
+    def create_tray_icon(self):
+        """Draw a self-contained pet-face icon so the tray is never iconless."""
+        pixmap = QPixmap(64, 64)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(QPen(QColor("#493B55"), 3))
+        painter.setBrush(QColor("#F2A76F"))
+        painter.drawEllipse(9, 13, 46, 44)
+        painter.setBrush(QColor("#F2A76F"))
+        painter.drawPolygon(
+            QPolygonF([QPointF(14, 26), QPointF(19, 4), QPointF(31, 20)])
+        )
+        painter.drawPolygon(
+            QPolygonF([QPointF(50, 26), QPointF(45, 4), QPointF(33, 20)])
+        )
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(QColor("#493B55"))
+        painter.drawEllipse(21, 30, 5, 8)
+        painter.drawEllipse(38, 30, 5, 8)
+        painter.setBrush(QColor("#F28391"))
+        painter.drawEllipse(14, 40, 10, 5)
+        painter.drawEllipse(40, 40, 10, 5)
+        painter.end()
+        return QIcon(pixmap)
 
     def setup_auto_save(self):
         """Setup auto-save timer."""
@@ -156,11 +190,16 @@ class PixelPetApp(QObject):
             result = data.get("result", "")
             sound_name = data.get("sound", None)
             leveled_up = data.get("leveled_up", False)
+            reaction = "level_up" if leveled_up else sound_name
 
             if result:
                 # Show speech bubble with result (pass pet position and size)
                 pos = self.pet_window.pos()
                 self.speech_bubble.show_message(result, pos, self.pet_window.size())
+
+            if reaction:
+                self.pet_window.show_reaction(reaction)
+            self.pet_window.update_pet_display()
 
             # Play sound effect
             if sound_name:
@@ -178,19 +217,40 @@ class PixelPetApp(QObject):
         elif event_type == "event":
             # Handle random event
             message = data.get("message", "")
-            event = data.get("event", {})
-
             if message:
                 # Show speech bubble with event message (pass pet position and size)
                 pos = self.pet_window.pos()
                 self.speech_bubble.show_message(message, pos, self.pet_window.size())
+                self.pet_window.show_reaction("event")
 
                 # Play event sound
                 self.sound_system.play("event")
 
+        elif event_type == "status":
+            self.status_window = PetStatusWindow(self.pet)
+            self.status_window.show()
+
+        elif event_type == "treat_game":
+            self.treat_game = TreatCatchWindow(
+                self.pet, completed_callback=self.handle_treat_game_reward
+            )
+            self.treat_game.show()
+
         elif event_type == "update_tray":
             # Update tray tooltip
             self.update_tray_tooltip()
+
+    def handle_treat_game_reward(self, reward):
+        """Persist mini-game rewards and celebrate level or cosmetic unlocks."""
+        self.pet_window.show_reaction(
+            "level_up" if reward["leveled_up"] else "game"
+        )
+        self.save_manager.save_pet(self.pet)
+        self.update_tray_tooltip()
+        if reward["leveled_up"]:
+            self.sound_system.play("level_up")
+        else:
+            self.sound_system.play("notification")
 
     def update_tray_tooltip(self):
         """Update the system tray tooltip with current pet status."""
