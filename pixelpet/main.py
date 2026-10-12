@@ -227,7 +227,9 @@ class PixelPetApp(QObject):
                 self.sound_system.play("event")
 
         elif event_type == "status":
-            self.status_window = PetStatusWindow(self.pet)
+            self.status_window = PetStatusWindow(
+                self.pet, accessory_callback=self.handle_accessory_equipped
+            )
             self.status_window.show()
 
         elif event_type == "treat_game":
@@ -251,6 +253,20 @@ class PixelPetApp(QObject):
             self.sound_system.play("level_up")
         else:
             self.sound_system.play("notification")
+
+    def handle_accessory_equipped(self, accessory):
+        """Refresh the pet after an accessory is equipped or removed."""
+        self.pet_window.update_pet_display()
+        self.pet_window.show_reaction("pet")
+        message = (
+            f"{self.pet.name} is wearing the {accessory}!"
+            if accessory
+            else f"{self.pet.name} is not wearing an accessory."
+        )
+        self.speech_bubble.show_message(
+            message, self.pet_window.pos(), self.pet_window.size()
+        )
+        self.save_manager.save_pet(self.pet)
 
     def update_tray_tooltip(self):
         """Update the system tray tooltip with current pet status."""

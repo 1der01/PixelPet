@@ -146,8 +146,10 @@ Interactions grant experience points:
 Level up to unlock cosmetic items like hats, bows, glasses, and more!
 
 Open the interaction menu and choose **My Pet** to view your stats, XP progress,
-care goals, achievements, and unlocked accessories. Choose **Catch Treats** for
-a 20-second mini-game; each treat caught earns 2 XP, up to 20 XP per round.
+care goals, achievements, and unlocked accessories. Choose an owned item under
+**Equipped accessory** to show it on your desktop pet; choose **None** to remove
+it. Your equipped item is saved with your pet. Choose **Catch Treats** for a
+20-second mini-game; each treat caught earns 2 XP, up to 20 XP per round.
 Catching at least 8 treats unlocks the Golden Bell accessory once.
 
 ### Random Events

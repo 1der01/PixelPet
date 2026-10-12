@@ -4,6 +4,7 @@ import random
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QDialog,
+    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -23,9 +24,10 @@ class PetStatusWindow(QDialog):
         ("cleanliness", "Cleanliness"),
     )
 
-    def __init__(self, pet, parent=None):
+    def __init__(self, pet, accessory_callback=None, parent=None):
         super().__init__(parent)
         self.pet = pet
+        self.accessory_callback = accessory_callback
         self.setWindowTitle(f"{pet.name}'s Status")
         self.setMinimumWidth(340)
 
@@ -64,6 +66,16 @@ class PetStatusWindow(QDialog):
         self.collection_label.setWordWrap(True)
         layout.addWidget(self.collection_label)
 
+        self.accessory_label = QLabel("Equipped accessory")
+        self.accessory_label.setStyleSheet("font-weight: bold;")
+        layout.addWidget(self.accessory_label)
+        self.accessory_selector = QComboBox()
+        self.accessory_selector.addItem("None")
+        self.accessory_selector.currentTextChanged.connect(
+            self.handle_accessory_selection
+        )
+        layout.addWidget(self.accessory_selector)
+
         self.refresh_status()
         self.refresh_timer = QTimer(self)
         self.refresh_timer.timeout.connect(self.refresh_status)
@@ -100,6 +112,27 @@ class PetStatusWindow(QDialog):
         self.collection_label.setText(
             f"Achievements: {achievements}\nAccessories: {inventory}"
         )
+
+        selected_item = progression.equipped_accessory or "None"
+        available_items = ["None", *progression.inventory]
+        current_items = [
+            self.accessory_selector.itemText(index)
+            for index in range(self.accessory_selector.count())
+        ]
+        if current_items != available_items:
+            self.accessory_selector.blockSignals(True)
+            self.accessory_selector.clear()
+            self.accessory_selector.addItems(available_items)
+            self.accessory_selector.blockSignals(False)
+        if self.accessory_selector.currentText() != selected_item:
+            self.accessory_selector.setCurrentText(selected_item)
+
+    def handle_accessory_selection(self, selected_item):
+        """Equip the selected owned item and notify the application."""
+        item = None if selected_item == "None" else selected_item
+        self.pet.progression.equip_accessory(item)
+        if self.accessory_callback:
+            self.accessory_callback(item)
 
     def closeEvent(self, event):
         self.refresh_timer.stop()

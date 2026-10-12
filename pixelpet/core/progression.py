@@ -20,6 +20,7 @@ class Progression:
         affection=0,
         care_streak=0,
         goals=None,
+        equipped_accessory=None,
     ):
         self.level = level
         self.experience = experience
@@ -27,6 +28,9 @@ class Progression:
         self.achievements = achievements or []
         self.affection = affection
         self.care_streak = care_streak
+        self.equipped_accessory = (
+            equipped_accessory if equipped_accessory in (inventory or []) else None
+        )
         self.goals = goals or {
             goal_id: {"title": data["title"], "target": data["target"], "progress": 0}
             for goal_id, data in self.DEFAULT_GOALS.items()
@@ -41,6 +45,7 @@ class Progression:
             "achievements": self.achievements,
             "affection": self.affection,
             "care_streak": self.care_streak,
+            "equipped_accessory": self.equipped_accessory,
             "goals": self.goals,
         }
 
@@ -60,7 +65,14 @@ class Progression:
             affection=data.get("affection", 0),
             care_streak=data.get("care_streak", 0),
             goals=goals,
+            equipped_accessory=data.get("equipped_accessory"),
         )
+
+    def equip_accessory(self, item):
+        """Equip an owned accessory, or clear the equipped slot with None."""
+        if item is not None and item not in self.inventory:
+            raise ValueError(f"Accessory is not in the inventory: {item}")
+        self.equipped_accessory = item
 
     def add_experience(self, amount):
         """Add experience and check for level up."""
@@ -143,6 +155,7 @@ class Progression:
         self.achievements = []
         self.affection = 0
         self.care_streak = 0
+        self.equipped_accessory = None
         self.goals = {
             goal_id: {"title": data["title"], "target": data["target"], "progress": 0}
             for goal_id, data in self.DEFAULT_GOALS.items()

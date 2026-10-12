@@ -149,6 +149,85 @@ class PetCanvas(QWidget):
                     QPointF(center_x + x_offset, center_y + y_offset), radius, radius
                 )
 
+        accessory = self.pet.progression.equipped_accessory
+        if accessory == "Hat":
+            painter.setPen(QPen(outline, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.setBrush(QColor("#E85D75"))
+            painter.drawRoundedRect(
+                int(center_x - 27), int(center_y - 66), 54, 23, 10, 10
+            )
+            painter.drawRoundedRect(
+                int(center_x - 35), int(center_y - 47), 70, 7, 3, 3
+            )
+        elif accessory == "Bow":
+            painter.setPen(QPen(outline, 2))
+            painter.setBrush(QColor("#FF6FAE"))
+            painter.drawPolygon(
+                QPolygonF(
+                    [
+                        QPointF(center_x - 25, center_y - 42),
+                        QPointF(center_x - 43, center_y - 55),
+                        QPointF(center_x - 42, center_y - 32),
+                    ]
+                )
+            )
+            painter.drawPolygon(
+                QPolygonF(
+                    [
+                        QPointF(center_x - 23, center_y - 42),
+                        QPointF(center_x - 5, center_y - 55),
+                        QPointF(center_x - 6, center_y - 32),
+                    ]
+                )
+            )
+            painter.setBrush(QColor("#FFD166"))
+            painter.drawEllipse(QPointF(center_x - 24, center_y - 42), 4, 4)
+        elif accessory == "Glasses":
+            painter.setPen(QPen(QColor("#493B55"), 3))
+            painter.setBrush(QColor(255, 255, 255, 45))
+            painter.drawEllipse(QPointF(center_x - 13, center_y - 5), 10, 9)
+            painter.drawEllipse(QPointF(center_x + 13, center_y - 5), 10, 9)
+            painter.drawLine(
+                QPointF(center_x - 3, center_y - 5),
+                QPointF(center_x + 3, center_y - 5),
+            )
+        elif accessory == "Crown":
+            painter.setPen(QPen(outline, 2, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.setBrush(QColor("#FFD166"))
+            painter.drawPolygon(
+                QPolygonF(
+                    [
+                        QPointF(center_x - 31, center_y - 47),
+                        QPointF(center_x - 28, center_y - 68),
+                        QPointF(center_x - 10, center_y - 53),
+                        QPointF(center_x, center_y - 72),
+                        QPointF(center_x + 10, center_y - 53),
+                        QPointF(center_x + 28, center_y - 68),
+                        QPointF(center_x + 31, center_y - 47),
+                    ]
+                )
+            )
+            painter.drawRoundedRect(
+                int(center_x - 31), int(center_y - 49), 62, 9, 3, 3
+            )
+        elif accessory == "Golden Bell":
+            painter.setPen(QPen(outline, 2))
+            painter.setBrush(QColor("#F4C542"))
+            painter.drawEllipse(QPointF(center_x, center_y + 34), 8, 7)
+            painter.setPen(QPen(QColor("#FFF0A6"), 2))
+            painter.drawPoint(QPointF(center_x, center_y + 34))
+        elif accessory == "Tiny backpack":
+            painter.setPen(QPen(outline, 2))
+            painter.setBrush(QColor("#69A9E8"))
+            painter.drawRoundedRect(
+                int(center_x + 30), int(center_y + 4), 20, 27, 6, 6
+            )
+            painter.setPen(QPen(QColor("#EAF4FF"), 2))
+            painter.drawLine(
+                QPointF(center_x + 34, center_y + 10),
+                QPointF(center_x + 46, center_y + 10),
+            )
+
         painter.setPen(QColor("#493B55"))
         painter.setFont(QFont("Segoe UI", 9, QFont.Bold))
         painter.drawText(
