@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QMessageBox,
     QFileDialog,
+    QComboBox,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -160,6 +161,51 @@ class SettingsWindow(QWidget):
         )
         self.notifications_cb.setChecked(self.settings.get("notifications", True))
         layout.addWidget(self.notifications_cb)
+
+        # Room theme
+        room_theme_label = QLabel("Room Theme:")
+        room_theme_label.setFont(QFont("Arial", 10, QFont.Bold))
+        room_theme_label.setStyleSheet("color: #ECF0F1;")
+        layout.addWidget(room_theme_label)
+
+        self.room_theme_combo = QComboBox()
+        self.room_theme_combo.addItems(["Cozy", "Garden", "Space", "Neon"])
+        self.room_theme_combo.setCurrentText(self.settings.get("room_theme", "Cozy"))
+        self.room_theme_combo.setStyleSheet(
+            """
+            QComboBox {
+                background-color: #34495E;
+                color: #ECF0F1;
+                border: 1px solid #7F8C8D;
+                border-radius: 6px;
+                padding: 8px;
+            }
+            """
+        )
+        layout.addWidget(self.room_theme_combo)
+
+        # Furniture selection
+        room_furniture_label = QLabel("Room Furniture:")
+        room_furniture_label.setFont(QFont("Arial", 10, QFont.Bold))
+        room_furniture_label.setStyleSheet("color: #ECF0F1;")
+        layout.addWidget(room_furniture_label)
+
+        self.room_furniture_combo = QComboBox()
+        self.room_furniture_combo.addItems(["Bed", "Plant", "Toy Box", "Lamp"])
+        current_furniture = self.settings.get("room_furniture", ["Bed", "Plant"])
+        self.room_furniture_combo.setCurrentText(current_furniture[0] if current_furniture else "Bed")
+        self.room_furniture_combo.setStyleSheet(
+            """
+            QComboBox {
+                background-color: #34495E;
+                color: #ECF0F1;
+                border: 1px solid #7F8C8D;
+                border-radius: 6px;
+                padding: 8px;
+            }
+            """
+        )
+        layout.addWidget(self.room_furniture_combo)
 
         # Pet transparency
         transparency_label = QLabel("Pet Transparency:")
@@ -376,6 +422,8 @@ class SettingsWindow(QWidget):
         self.settings["start_with_windows"] = self.start_with_windows_cb.isChecked()
         self.settings["sound_effects"] = self.sound_effects_cb.isChecked()
         self.settings["notifications"] = self.notifications_cb.isChecked()
+        self.settings["room_theme"] = self.room_theme_combo.currentText()
+        self.settings["room_furniture"] = [self.room_furniture_combo.currentText()]
         self.settings["pet_transparency"] = self.transparency_slider.value()
         self.settings["animation_intensity"] = self.anim_slider.value() / 100.0
 

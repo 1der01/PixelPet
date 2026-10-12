@@ -38,6 +38,50 @@ class PetCanvas(QWidget):
         if self.reaction in ("play", "game", "level_up"):
             bob += abs(math.sin(self.anim_time * 8)) * 8
         center_y = height * 0.54 + bob
+
+        room_theme = getattr(self.pet, "room_theme", "Cozy")
+        room_theme_colors = {
+            "Cozy": ("#F8EBD0", "#E7C4A0", "#B8D6A0"),
+            "Garden": ("#DFF6D7", "#B7E8A7", "#60B26A"),
+            "Space": ("#121B3A", "#1D2E5C", "#7C7AE8"),
+            "Neon": ("#1E1A2A", "#3A246B", "#FF4FD8"),
+        }
+        wall, accent, floor = room_theme_colors.get(room_theme, room_theme_colors["Cozy"])
+        painter.fillRect(0, 0, width, height, QColor(wall))
+        painter.fillRect(0, height - 60, width, 60, QColor(floor))
+        accent_color = QColor(accent)
+        accent_color.setAlpha(120)
+        painter.setPen(QColor(accent))
+        painter.setBrush(accent_color)
+        painter.drawRoundedRect(30, 28, width - 60, height - 110, 24, 24)
+
+        furniture = getattr(self.pet, "room_furniture", ["Bed", "Plant"])
+        if "Bed" in furniture:
+            painter.setPen(QColor("#6C4F3D"))
+            painter.setBrush(QColor("#B07A5A"))
+            painter.drawRoundedRect(42, height - 88, width * 0.28, 42, 16, 16)
+            painter.setBrush(QColor("#D9C6A5"))
+            painter.drawRect(58, height - 72, width * 0.22, 18)
+        if "Plant" in furniture:
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor("#2E8B57"))
+            painter.drawEllipse(QPointF(width - 110, height - 88), 18, 24)
+            painter.drawEllipse(QPointF(width - 138, height - 80), 16, 20)
+            painter.drawEllipse(QPointF(width - 82, height - 80), 16, 20)
+            painter.setBrush(QColor("#5C3D2E"))
+            painter.drawRect(int(width - 122), int(height - 62), 12, 24)
+        if "Toy Box" in furniture:
+            painter.setPen(QColor("#4A3D72"))
+            painter.setBrush(QColor("#8A7AE6"))
+            painter.drawRoundedRect(width - 180, height - 110, 70, 44, 10, 10)
+        if "Lamp" in furniture:
+            painter.setPen(QColor("#F8D77A"))
+            lamp_color = QColor("#F8D77A")
+            lamp_color.setAlpha(160)
+            painter.setBrush(lamp_color)
+            painter.drawEllipse(QPointF(width * 0.75, 58), 18, 18)
+            painter.drawRect(int(width * 0.75) - 3, 78, 6, 44)
+
         body_color = QColor(self.BODY_COLORS.get(self.pet.species, "#F2A76F"))
         outline = QColor("#493B55")
         breathe = 1.0 + math.sin(self.anim_time * 1.5) * 0.025

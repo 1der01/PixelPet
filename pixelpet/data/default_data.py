@@ -8,6 +8,8 @@ DEFAULT_SETTINGS = {
     "notifications": True,
     "pet_transparency": 255,
     "animation_intensity": 1.0,
+    "room_theme": "Cozy",
+    "room_furniture": ["Bed", "Plant"],
 }
 
 DEFAULT_PET = {

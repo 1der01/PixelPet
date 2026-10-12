@@ -292,6 +292,12 @@ class PixelPetApp(QObject):
         """Update application settings."""
         self.settings = new_settings
         self.save_manager.save_settings(self.settings)
+
+        if hasattr(self, "pet"):
+            self.pet.room_theme = self.settings.get("room_theme", "Cozy")
+            self.pet.room_furniture = self.settings.get("room_furniture", ["Bed", "Plant"])
+            self.save_manager.save_pet(self.pet)
+
         self.pet_window.update_settings(self.settings)
 
         # Update sound system

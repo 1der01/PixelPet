@@ -29,6 +29,8 @@ class Pet:
         stats=None,
         progression=None,
         age=0,
+        room_theme="Cozy",
+        room_furniture=None,
     ):
         self.name = name
         self.species = species
@@ -37,6 +39,8 @@ class Pet:
         self.stats = stats or Stats()
         self.progression = progression or Progression()
         self.age = age
+        self.room_theme = room_theme
+        self.room_furniture = room_furniture or ["Bed", "Plant"]
         self.mood = MoodSystem.calculate_mood(self.stats)
         self.is_sleeping = False
         self.event_system = EventSystem()
@@ -57,6 +61,8 @@ class Pet:
             "mood": self.mood,
             "is_sleeping": self.is_sleeping,
             "created_time": self.created_time,
+            "room_theme": self.room_theme,
+            "room_furniture": self.room_furniture,
         }
 
     @classmethod
@@ -69,6 +75,8 @@ class Pet:
             stats=Stats.from_dict(data.get("stats", {})),
             progression=Progression.from_dict(data.get("progression", {})),
             age=data.get("age", 0),
+            room_theme=data.get("room_theme", "Cozy"),
+            room_furniture=data.get("room_furniture", ["Bed", "Plant"]),
         )
         pet.mood = data.get("mood", MoodSystem.calculate_mood(pet.stats))
         pet.is_sleeping = data.get("is_sleeping", False)
