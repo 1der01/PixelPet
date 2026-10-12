@@ -197,34 +197,34 @@ class SpeechBubble(QWidget):
 
     def calculate_position(self, pet_pos, pet_size):
         """Calculate smart position for speech bubble avoiding screen edges."""
-        screen = self.screen() if hasattr(self, 'screen') else None
+        from PySide6.QtWidgets import QApplication
+
+        pet_center = pet_pos + QPoint(pet_size.width() // 2, pet_size.height() // 2)
+        screen = QApplication.screenAt(pet_center)
         if not screen:
-            from PySide6.QtWidgets import QApplication
             screen = QApplication.primaryScreen()
 
         if not screen:
-            return pet_pos + QPoint(0, -100)
+            return pet_pos + QPoint(0, -self.height() - 20)
 
         screen_geometry = screen.availableGeometry()
-
-        # Default position: above pet
-        bubble_width = 250
-        bubble_height = 80
-        x = pet_pos.x() + pet_size.width() // 2 - bubble_width // 2
+        margin = 10
+        bubble_width = self.width()
+        bubble_height = self.height()
+        x = pet_center.x() - bubble_width // 2
         y = pet_pos.y() - bubble_height - 20
 
-        # Check if bubble would go off the top
-        if y < screen_geometry.top():
-            # Position below pet instead
+        if y < screen_geometry.top() + margin:
             y = pet_pos.y() + pet_size.height() + 20
 
-        # Check if bubble would go off the left
-        if x < screen_geometry.left():
-            x = screen_geometry.left() + 10
-
-        # Check if bubble would go off the right
-        if x + bubble_width > screen_geometry.right():
-            x = screen_geometry.right() - bubble_width - 10
+        x = max(
+            screen_geometry.left() + margin,
+            min(x, screen_geometry.right() - bubble_width - margin + 1),
+        )
+        y = max(
+            screen_geometry.top() + margin,
+            min(y, screen_geometry.bottom() - bubble_height - margin + 1),
+        )
 
         return QPoint(x, y)
 
@@ -236,22 +236,25 @@ class SpeechBubble(QWidget):
 
         # Set message and calculate size
         self.label.setText(message)
-        self.label.adjustSize()
-
-        # Calculate bubble size based on text
-        text_width = self.label.sizeHint().width()
-        text_height = self.label.sizeHint().height()
-
+        text_width = max(
+            self.label.fontMetrics().horizontalAdvance(line)
+            for line in message.splitlines() or [""]
+        )
         bubble_width = max(200, min(350, text_width + 40))
-        bubble_height = max(60, min(120, text_height + 40))
-
-        self.setFixedSize(bubble_width, bubble_height)
+        label_width = bubble_width - 48
+        self.label.setFixedWidth(label_width)
+        label_height = max(1, self.label.heightForWidth(label_width))
+        self.label.setFixedHeight(label_height)
+        self.bubble.layout().invalidate()
+        self.layout().invalidate()
+        self.bubble.adjustSize()
+        self.setFixedSize(self.bubble.sizeHint())
 
         # Calculate smart position
         if pet_size:
             pos = self.calculate_position(pet_pos, pet_size)
         else:
-            pos = pet_pos + QPoint(0, -100)
+            pos = pet_pos + QPoint(0, -self.height() - 20)
 
         self.move(pos)
 
