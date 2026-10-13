@@ -1,5 +1,6 @@
 """Save manager for PixelPet - handles JSON persistence."""
 import json
+import math
 import os
 import shutil
 import tempfile
@@ -80,7 +81,90 @@ class SaveManager:
 
     def restore_pet_backup(self, backup_path=None):
         """Restore the pet save from the latest backup."""
+        if backup_path is None:
+            backup_path = self.get_latest_backup(self.save_file)
+        if backup_path is None or not self._is_valid_pet_save_file(backup_path):
+            return False
         return self.restore_backup(self.save_file, backup_path)
+
+    @staticmethod
+    def _is_valid_pet_save(data):
+        """Check that imported pet data has the structure understood by PixelPet."""
+        if not isinstance(data, dict):
+            return False
+
+        if not isinstance(data.get("name"), str) or not data["name"].strip():
+            return False
+        if data.get("species") not in ("Cat", "Dog", "Blob", "Frog", "Robot"):
+            return False
+
+        def is_number(value):
+            if isinstance(value, bool):
+                return False
+            if isinstance(value, int):
+                return True
+            return isinstance(value, float) and math.isfinite(value)
+
+        for key in ("age", "created_time", "last_saved"):
+            if key in data and not is_number(data[key]):
+                return False
+        for key in ("personality", "mood", "room_theme"):
+            if key in data and not isinstance(data[key], str):
+                return False
+        if "is_sleeping" in data and not isinstance(data["is_sleeping"], bool):
+            return False
+
+        furniture = data.get("room_furniture")
+        if furniture is not None and (
+            not isinstance(furniture, list)
+            or not all(isinstance(item, str) for item in furniture)
+        ):
+            return False
+
+        stats = data.get("stats", {})
+        if not isinstance(stats, dict) or any(
+            not is_number(value) for value in stats.values()
+        ):
+            return False
+
+        progression = data.get("progression", {})
+        if not isinstance(progression, dict):
+            return False
+        for key in ("level", "experience", "affection", "care_streak"):
+            if key in progression and not is_number(progression[key]):
+                return False
+        for key in ("inventory", "achievements"):
+            if key in progression and (
+                not isinstance(progression[key], list)
+                or not all(isinstance(item, str) for item in progression[key])
+            ):
+                return False
+        equipped = progression.get("equipped_accessory")
+        if equipped is not None and not isinstance(equipped, str):
+            return False
+        goals = progression.get("goals")
+        if goals is not None:
+            if not isinstance(goals, dict):
+                return False
+            for goal in goals.values():
+                if (
+                    not isinstance(goal, dict)
+                    or not isinstance(goal.get("title"), str)
+                    or not is_number(goal.get("target"))
+                    or not is_number(goal.get("progress"))
+                ):
+                    return False
+
+        return True
+
+    @classmethod
+    def _is_valid_pet_save_file(cls, file_path):
+        """Read and validate a pet save without modifying it."""
+        try:
+            with open(file_path, "r", encoding="utf-8") as save_file:
+                return cls._is_valid_pet_save(json.load(save_file))
+        except (OSError, ValueError):
+            return False
 
     def export_save(self, file_path, save_type="pet"):
         """Export a save file to another location without altering the current save."""
@@ -102,8 +186,11 @@ class SaveManager:
         target = self.save_file if save_type == "pet" else self.settings_file
         try:
             with open(source, "r", encoding="utf-8") as imported_file:
-                json.load(imported_file)
+                imported_data = json.load(imported_file)
         except (OSError, ValueError):
+            return False
+
+        if save_type == "pet" and not self._is_valid_pet_save(imported_data):
             return False
 
         self._backup_file(target)

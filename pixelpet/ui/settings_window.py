@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QFileDialog,
     QComboBox,
+    QScrollArea,
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
@@ -99,6 +100,7 @@ class SettingsWindow(QWidget):
         self.pet = pet
         self.settings_saved_callback = None
         self.pet_reset_callback = None
+        self.pet_save_changed_callback = None
         self.setup_ui()
 
     @staticmethod
@@ -164,7 +166,8 @@ class SettingsWindow(QWidget):
     def setup_ui(self):
         """Setup the settings window UI."""
         self.setWindowTitle("PixelPet Settings")
-        self.setFixedSize(400, 500)
+        self.resize(400, 500)
+        self.setMinimumSize(360, 400)
 
         container = QFrame()
         container.setStyleSheet(
@@ -313,9 +316,15 @@ class SettingsWindow(QWidget):
 
         container.setLayout(layout)
 
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setFrameShape(QFrame.NoFrame)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setWidget(container)
+
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(container)
+        main_layout.addWidget(scroll_area)
         self.setLayout(main_layout)
 
     def _get_furniture_unlock_tooltip(self, item):
@@ -368,6 +377,10 @@ class SettingsWindow(QWidget):
         """Set callback for pet reset."""
         self.pet_reset_callback = callback
 
+    def set_pet_save_changed_callback(self, callback):
+        """Set callback for a successful pet save import or restore."""
+        self.pet_save_changed_callback = callback
+
     def backup_save(self):
         """Create a backup of the current pet save."""
         if self.save_manager is None:
@@ -401,6 +414,13 @@ class SettingsWindow(QWidget):
 
         if reply == QMessageBox.Yes:
             if self.save_manager.restore_pet_backup(latest_backup):
+                if self.pet_save_changed_callback and not self.pet_save_changed_callback():
+                    QMessageBox.warning(
+                        self,
+                        "Restore failed",
+                        "The backup was restored, but the pet could not be reloaded.",
+                    )
+                    return
                 QMessageBox.information(self, "Backup restored", "Your pet save has been restored.")
             else:
                 QMessageBox.warning(self, "Restore failed", "Could not restore the backup file.")
@@ -444,9 +464,20 @@ class SettingsWindow(QWidget):
             return
 
         if self.save_manager.import_save(path, save_type="pet"):
+            if self.pet_save_changed_callback and not self.pet_save_changed_callback():
+                QMessageBox.warning(
+                    self,
+                    "Import failed",
+                    "The save was imported, but the pet could not be reloaded.",
+                )
+                return
             QMessageBox.information(self, "Save imported", "Your pet save was imported successfully.")
         else:
-            QMessageBox.warning(self, "Import failed", "The selected file is not a valid PixelPet save.")
+            QMessageBox.warning(
+                self,
+                "Import failed",
+                "The selected file is not a valid PixelPet save.",
+            )
 
     def reset_pet(self):
         """Reset the pet with confirmation."""

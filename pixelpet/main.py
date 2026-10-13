@@ -290,7 +290,39 @@ class PixelPetApp(QObject):
         )
         self.settings_window.set_settings_saved_callback(self.update_settings)
         self.settings_window.set_pet_reset_callback(self.reset_pet)
+        self.settings_window.set_pet_save_changed_callback(self.reload_pet_save)
         self.settings_window.show()
+
+    def reload_pet_save(self):
+        """Reload an imported or restored pet save into the running application."""
+        pet_data = self.save_manager.load_pet()
+        if pet_data is None:
+            return False
+
+        try:
+            pet = Pet.from_dict(pet_data)
+        except (AttributeError, KeyError, TypeError, ValueError):
+            return False
+
+        self.pet = pet
+        self.settings["room_theme"] = pet.room_theme
+        self.settings["room_furniture"] = pet.progression.sanitize_room_furniture(
+            pet.room_furniture
+        )
+        pet.room_furniture = self.settings["room_furniture"]
+        self.save_manager.save_settings(self.settings)
+
+        self.pet_window.pet = pet
+        self.pet_window.pet_canvas.pet = pet
+        self.pet_window.update_settings(self.settings)
+        self.pet_window.show()
+        self.pet_window.update_pet_display()
+
+        self.interaction_menu.close()
+        self.interaction_menu = InteractionMenu(pet)
+        self.interaction_menu.set_action_callback(self.handle_interaction)
+        self.update_tray_tooltip()
+        return True
 
     def update_settings(self, new_settings):
         """Update application settings."""
