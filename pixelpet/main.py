@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap, QPolygonF
 
 from .core import Pet, SoundSystem
-from .data import SaveManager, DEFAULT_SETTINGS
+from .data import SaveManager, DEFAULT_SETTINGS, SettingsManager
 from .ui import (
     PetWindow,
     InteractionMenu,
@@ -29,9 +29,11 @@ class PixelPetApp(QObject):
         self.save_manager = SaveManager()
 
         # Load settings
-        self.settings = self.save_manager.load_settings()
-        if self.settings is None:
-            self.settings = DEFAULT_SETTINGS.copy()
+        raw_settings = self.save_manager.load_settings()
+        if raw_settings is None:
+            self.settings = SettingsManager.normalize(DEFAULT_SETTINGS)
+        else:
+            self.settings = SettingsManager.normalize(raw_settings)
 
         # Initialize sound system
         self.sound_system = SoundSystem()

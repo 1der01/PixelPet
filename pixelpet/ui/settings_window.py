@@ -1,6 +1,8 @@
 """Settings window for PixelPet."""
 import copy
 
+from pixelpet.data import SettingsManager
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -95,7 +97,7 @@ class SettingsWindow(QWidget):
 
     def __init__(self, settings, save_manager=None, pet=None, parent=None):
         super().__init__(parent)
-        self.settings = copy.deepcopy(settings or {})
+        self.settings = SettingsManager.normalize(settings)
         self.save_manager = save_manager
         self.pet = pet
         self.settings_saved_callback = None
@@ -215,9 +217,9 @@ class SettingsWindow(QWidget):
         layout.addWidget(room_theme_label)
 
         self.room_theme_combo = QComboBox()
-        self.room_theme_combo.addItems(self.ROOM_THEME_OPTIONS)
+        self.room_theme_combo.addItems(SettingsManager.ROOM_THEME_OPTIONS)
         current_theme = self.settings.get("room_theme", "Cozy")
-        if current_theme in self.ROOM_THEME_OPTIONS:
+        if current_theme in SettingsManager.ROOM_THEME_OPTIONS:
             self.room_theme_combo.setCurrentText(current_theme)
         else:
             self.room_theme_combo.setCurrentText("Cozy")
@@ -232,7 +234,7 @@ class SettingsWindow(QWidget):
         self.room_furniture_checks = {}
         available_furniture = self._get_available_furniture()
         furniture_row = QHBoxLayout()
-        for index, item in enumerate(self.ROOM_FURNITURE_OPTIONS):
+        for index, item in enumerate(SettingsManager.ROOM_FURNITURE_OPTIONS):
             checkbox = QCheckBox(item)
             checkbox.setEnabled(item in available_furniture)
             checkbox.setToolTip(
@@ -345,8 +347,8 @@ class SettingsWindow(QWidget):
     def save_settings(self):
         """Save the settings after validating entries."""
         theme = self.room_theme_combo.currentText()
-        if theme not in self.ROOM_THEME_OPTIONS:
-            theme = "Cozy"
+        if theme not in SettingsManager.ROOM_THEME_OPTIONS:
+            theme = SettingsManager.normalize({})["room_theme"]
 
         available_furniture = self._get_available_furniture()
         selected_furniture = [
@@ -355,14 +357,18 @@ class SettingsWindow(QWidget):
             if checkbox.isChecked() and item in available_furniture
         ]
 
-        self.settings["always_on_top"] = bool(self.always_on_top_cb.isChecked())
-        self.settings["start_with_windows"] = bool(self.start_with_windows_cb.isChecked())
-        self.settings["sound_effects"] = bool(self.sound_effects_cb.isChecked())
-        self.settings["notifications"] = bool(self.notifications_cb.isChecked())
-        self.settings["room_theme"] = theme
-        self.settings["room_furniture"] = self._sanitize_room_furniture(selected_furniture)
-        self.settings["pet_transparency"] = max(50, min(255, int(self.transparency_slider.value())))
-        self.settings["animation_intensity"] = max(0.0, min(2.0, self.anim_slider.value() / 100.0))
+        self.settings = SettingsManager.normalize(
+            {
+                "always_on_top": self.always_on_top_cb.isChecked(),
+                "start_with_windows": self.start_with_windows_cb.isChecked(),
+                "sound_effects": self.sound_effects_cb.isChecked(),
+                "notifications": self.notifications_cb.isChecked(),
+                "room_theme": theme,
+                "room_furniture": self._sanitize_room_furniture(selected_furniture),
+                "pet_transparency": int(self.transparency_slider.value()),
+                "animation_intensity": self.anim_slider.value() / 100.0,
+            }
+        )
 
         if self.settings_saved_callback:
             self.settings_saved_callback(self.settings)
