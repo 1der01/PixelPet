@@ -1,5 +1,6 @@
 """Settings window for PixelPet."""
 import copy
+import os
 
 from pixelpet.data import SettingsManager
 
@@ -199,6 +200,11 @@ class SettingsWindow(QWidget):
         self.start_with_windows_cb = self._create_checkbox(
             "Start with Windows", self.settings.get("start_with_windows", False)
         )
+        self.start_with_windows_cb.setEnabled(os.name == "nt")
+        if os.name != "nt":
+            self.start_with_windows_cb.setToolTip(
+                "Automatic startup is only supported on Windows."
+            )
         layout.addWidget(self.start_with_windows_cb)
 
         self.sound_effects_cb = self._create_checkbox(
@@ -207,7 +213,10 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.sound_effects_cb)
 
         self.notifications_cb = self._create_checkbox(
-            "Notifications", self.settings.get("notifications", True)
+            "Event Notifications", self.settings.get("notifications", True)
+        )
+        self.notifications_cb.setToolTip(
+            "Show speech bubbles and reactions for random pet events."
         )
         layout.addWidget(self.notifications_cb)
 

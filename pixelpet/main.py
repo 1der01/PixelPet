@@ -1,11 +1,11 @@
 """Main entry point for PixelPet."""
 import sys
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QMessageBox
 from PySide6.QtCore import QObject, QPointF, Qt
 from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPen, QPixmap, QPolygonF
 
 from .core import Pet, SoundSystem
-from .data import SaveManager, DEFAULT_SETTINGS, SettingsManager
+from .data import SaveManager, DEFAULT_SETTINGS, SettingsManager, StartupManager
 from .ui import (
     PetWindow,
     InteractionMenu,
@@ -217,15 +217,11 @@ class PixelPetApp(QObject):
             self.update_tray_tooltip()
 
         elif event_type == "event":
-            # Handle random event
             message = data.get("message", "")
-            if message:
-                # Show speech bubble with event message (pass pet position and size)
+            if self.settings.get("notifications", True) and message:
                 pos = self.pet_window.pos()
                 self.speech_bubble.show_message(message, pos, self.pet_window.size())
                 self.pet_window.show_reaction("event")
-
-                # Play event sound
                 self.sound_system.play("event")
 
         elif event_type == "status":
@@ -328,6 +324,21 @@ class PixelPetApp(QObject):
 
     def update_settings(self, new_settings):
         """Update application settings."""
+        start_with_windows = new_settings.get("start_with_windows", False)
+        if start_with_windows != self.settings.get("start_with_windows", False):
+            try:
+                StartupManager.set_enabled(start_with_windows)
+            except OSError as exc:
+                QMessageBox.warning(
+                    self.pet_window,
+                    "Startup setting unavailable",
+                    f"Could not update Windows startup registration:\n{exc}",
+                )
+                new_settings = dict(new_settings)
+                new_settings["start_with_windows"] = self.settings.get(
+                    "start_with_windows", False
+                )
+
         self.settings = new_settings
         self.save_manager.save_settings(self.settings)
 

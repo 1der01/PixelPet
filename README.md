@@ -191,12 +191,15 @@ Access settings via the system tray menu:
 - **Always on Top**: Keep the pet window above other windows
 - **Start with Windows**: Launch PixelPet automatically on startup
 - **Sound Effects**: Enable/disable sound effects
-- **Notifications**: Enable/disable event notifications
+- **Event Notifications**: Show or hide random-event speech bubbles, reactions, and alert sounds
 - **Pet Transparency**: Adjust the pet window's opacity
 - **Animation Intensity**: Control animation speed/intensity
 - **Backup Save / Restore**: Keep a local recovery point and restore from the latest snapshot
 - **Export / Import Save**: Copy your pet save to another location or restore a previous JSON export
 - **Reset Pet**: Start fresh with a new pet (with confirmation)
+
+**Start with Windows** registers PixelPet for the current Windows user. This
+option is unavailable on other platforms.
 
 ## Future Improvements
 

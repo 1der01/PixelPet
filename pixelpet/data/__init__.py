@@ -3,5 +3,13 @@ from .save_manager import SaveManager
 from .default_data import DEFAULT_SETTINGS, DEFAULT_PET
 from .settings_manager import SettingsManager
 from .activity_service import ActivityService
+from .startup_manager import StartupManager
 
-__all__ = ["SaveManager", "DEFAULT_SETTINGS", "DEFAULT_PET", "SettingsManager", "ActivityService"]
+__all__ = [
+    "SaveManager",
+    "DEFAULT_SETTINGS",
+    "DEFAULT_PET",
+    "SettingsManager",
+    "ActivityService",
+    "StartupManager",
+]
