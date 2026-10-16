@@ -201,6 +201,10 @@ Access settings via the system tray menu:
 **Start with Windows** registers PixelPet for the current Windows user. This
 option is unavailable on other platforms.
 
+PixelPet keeps the 20 most recent timestamped backups per save file, in addition
+to the quick-access latest backup. If a save fails, it reports the problem and
+logs diagnostic details for troubleshooting.
+
 ## Future Improvements
 
 Potential features for future versions:

@@ -22,6 +22,7 @@ class PixelPetApp(QObject):
 
     def __init__(self):
         super().__init__()
+        self._save_error_notified = False
         self.app = QApplication(sys.argv)
         self.app.setQuitOnLastWindowClosed(False)
 
@@ -167,7 +168,7 @@ class PixelPetApp(QObject):
         )
 
         # Save the new pet
-        self.save_manager.save_pet(self.pet)
+        self._save_pet()
 
         # Setup UI
         self.setup_ui()
@@ -212,7 +213,7 @@ class PixelPetApp(QObject):
                 self.sound_system.play("level_up")
 
             # Save after action
-            self.save_manager.save_pet(self.pet)
+            self._save_pet()
             # Update tray tooltip
             self.update_tray_tooltip()
 
@@ -245,7 +246,7 @@ class PixelPetApp(QObject):
         self.pet_window.show_reaction(
             "level_up" if reward["leveled_up"] else "game"
         )
-        self.save_manager.save_pet(self.pet)
+        self._save_pet()
         self.update_tray_tooltip()
         if reward["leveled_up"]:
             self.sound_system.play("level_up")
@@ -264,7 +265,7 @@ class PixelPetApp(QObject):
         self.speech_bubble.show_message(
             message, self.pet_window.pos(), self.pet_window.size()
         )
-        self.save_manager.save_pet(self.pet)
+        self._save_pet()
 
     def update_tray_tooltip(self):
         """Update the system tray tooltip with current pet status."""
@@ -308,7 +309,7 @@ class PixelPetApp(QObject):
             pet.room_furniture
         )
         pet.room_furniture = self.settings["room_furniture"]
-        self.save_manager.save_settings(self.settings)
+        self._save_settings()
 
         self.pet_window.pet = pet
         self.pet_window.pet_canvas.pet = pet
@@ -340,14 +341,14 @@ class PixelPetApp(QObject):
                 )
 
         self.settings = new_settings
-        self.save_manager.save_settings(self.settings)
+        self._save_settings()
 
         if hasattr(self, "pet"):
             self.pet.room_theme = self.settings.get("room_theme", "Cozy")
             self.pet.room_furniture = self.pet.progression.sanitize_room_furniture(
                 self.settings.get("room_furniture", self.pet.progression.get_available_room_furniture())
             )
-            self.save_manager.save_pet(self.pet)
+            self._save_pet()
 
         self.pet_window.update_settings(self.settings)
 
@@ -357,26 +358,60 @@ class PixelPetApp(QObject):
     def reset_pet(self):
         """Reset the pet to starting state."""
         self.pet.reset()
-        self.save_manager.save_pet(self.pet)
+        self._save_pet()
         self.pet_window.update_pet_display()
         self.speech_bubble.show_message("Pet reset!", self.pet_window.pos(), self.pet_window.size())
         self.sound_system.play("notification")
 
     def manual_save(self):
         """Manually save pet state."""
-        if self.save_manager.save_pet(self.pet):
+        if self._save_pet():
             self.speech_bubble.show_message("Saved!", self.pet_window.pos(), self.pet_window.size())
 
     def auto_save(self):
         """Auto-save pet state."""
-        self.save_manager.save_pet(self.pet)
+        self._save_pet()
+
+    def _report_save_failure(self):
+        """Notify once per consecutive save-failure period."""
+        if self._save_error_notified:
+            return
+
+        self._save_error_notified = True
+        title = "PixelPet could not save"
+        message = "Your latest changes may not be saved. Check available disk space and permissions."
+        if hasattr(self, "tray_icon") and self.tray_icon.isVisible():
+            self.tray_icon.showMessage(
+                title, message, QSystemTrayIcon.Warning, 10000
+            )
+        else:
+            QMessageBox.warning(
+                getattr(self, "pet_window", None), title, message
+            )
+
+    def _handle_save_result(self, saved):
+        if saved:
+            self._save_error_notified = False
+        else:
+            self._report_save_failure()
+        return saved
+
+    def _save_pet(self):
+        """Persist pet data and report failures to the user."""
+        return self._handle_save_result(self.save_manager.save_pet(self.pet))
+
+    def _save_settings(self):
+        """Persist settings and report failures to the user."""
+        return self._handle_save_result(
+            self.save_manager.save_settings(self.settings)
+        )
 
     def quit(self):
         """Quit the application."""
         # Save before quitting (only if pet exists)
         if hasattr(self, 'pet'):
-            self.save_manager.save_pet(self.pet)
-        self.save_manager.save_settings(self.settings)
+            self._save_pet()
+        self._save_settings()
         self.app.quit()
 
     def run(self):

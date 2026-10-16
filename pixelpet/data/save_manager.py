@@ -1,5 +1,6 @@
 """Save manager for PixelPet - handles JSON persistence."""
 import json
+import logging
 import math
 import os
 import shutil
@@ -9,8 +10,13 @@ from datetime import datetime
 from pathlib import Path
 
 
+logger = logging.getLogger(__name__)
+
+
 class SaveManager:
     """Manages saving and loading pet data."""
+
+    MAX_BACKUPS = 20
 
     def __init__(self, save_dir=None):
         if save_dir is None:
@@ -35,8 +41,19 @@ class SaveManager:
             # Keep a quick-access latest backup for simple restore flows.
             latest_backup = file_path.with_name(f"{file_path.name}.bak")
             shutil.copy2(file_path, latest_backup)
+            self._prune_backups(file_path)
             return backup_path
         return None
+
+    def _prune_backups(self, file_path):
+        """Keep only the most recent timestamped backups for a save file."""
+        backups = sorted(
+            self.backup_dir.glob(f"{file_path.name}.*.bak"),
+            key=lambda path: path.name,
+            reverse=True,
+        )
+        for backup_path in backups[self.MAX_BACKUPS:]:
+            backup_path.unlink()
 
     def backup_file(self, file_path):
         """Create a timestamped backup for a save file and return its path."""
@@ -49,6 +66,7 @@ class SaveManager:
 
         latest_backup = file_path.with_name(f"{file_path.name}.bak")
         shutil.copy2(file_path, latest_backup)
+        self._prune_backups(file_path)
         return backup_path
 
     def restore_backup(self, file_path, backup_path=None):
@@ -216,8 +234,8 @@ class SaveManager:
 
             os.replace(temp_path, file_path)
             return True
-        except Exception as exc:
-            print(f"Error saving {file_path.name}: {exc}")
+        except Exception:
+            logger.exception("Error saving %s", file_path.name)
             if temp_path and temp_path.exists():
                 temp_path.unlink(missing_ok=True)
             return False
@@ -228,8 +246,8 @@ class SaveManager:
             data = pet.to_dict()
             data["last_saved"] = int(time.time())
             return self._atomic_write_json(self.save_file, data)
-        except Exception as e:
-            print(f"Error saving pet: {e}")
+        except Exception:
+            logger.exception("Error saving pet")
             return False
 
     def load_pet(self):
@@ -243,18 +261,18 @@ class SaveManager:
 
             return data
         except json.JSONDecodeError:
-            print("Corrupted save file, will create new pet")
+            logger.error("Corrupted save file, will create new pet")
             return None
-        except Exception as e:
-            print(f"Error loading pet: {e}")
+        except Exception:
+            logger.exception("Error loading pet")
             return None
 
     def save_settings(self, settings):
         """Save settings to JSON file."""
         try:
             return self._atomic_write_json(self.settings_file, settings)
-        except Exception as e:
-            print(f"Error saving settings: {e}")
+        except Exception:
+            logger.exception("Error saving settings")
             return False
 
     def load_settings(self):
@@ -268,10 +286,12 @@ class SaveManager:
 
             return data
         except json.JSONDecodeError:
-            print("Corrupted settings file, will use defaults")
+            logger.error(
+                "Corrupted settings file, will use defaults"
+            )
             return None
-        except Exception as e:
-            print(f"Error loading settings: {e}")
+        except Exception:
+            logger.exception("Error loading settings")
             return None
 
     def delete_save(self):
@@ -280,8 +300,8 @@ class SaveManager:
             if self.save_file.exists():
                 self.save_file.unlink()
             return True
-        except Exception as e:
-            print(f"Error deleting save: {e}")
+        except Exception:
+            logger.exception("Error deleting save")
             return False
 
     def has_save(self):

@@ -46,6 +46,12 @@ class EventNotificationTests(unittest.TestCase):
             "room_furniture": ["Bed"],
         }
         app.pet.progression.sanitize_room_furniture.return_value = ["Bed"]
+        app._save_error_notified = False
+        app._save_settings = lambda: PixelPetApp._save_settings(app)
+        app._handle_save_result = (
+            lambda saved: PixelPetApp._handle_save_result(app, saved)
+        )
+        app._report_save_failure = lambda: PixelPetApp._report_save_failure(app)
         return app
 
     def test_saving_startup_preference_registers_pixelpet(self):
@@ -74,6 +80,28 @@ class EventNotificationTests(unittest.TestCase):
         self.assertFalse(app.settings["start_with_windows"])
         app.save_manager.save_settings.assert_called_once()
         warning.assert_called_once()
+
+
+class SaveFailureReportingTests(unittest.TestCase):
+    @staticmethod
+    def make_app():
+        app = Mock()
+        app._save_error_notified = False
+        app.tray_icon.isVisible.return_value = True
+        app._report_save_failure = lambda: PixelPetApp._report_save_failure(app)
+        return app
+
+    def test_save_failure_notification_is_throttled_until_a_success(self):
+        app = self.make_app()
+
+        PixelPetApp._handle_save_result(app, False)
+        PixelPetApp._handle_save_result(app, False)
+        self.assertEqual(app.tray_icon.showMessage.call_count, 1)
+
+        PixelPetApp._handle_save_result(app, True)
+        PixelPetApp._handle_save_result(app, False)
+
+        self.assertEqual(app.tray_icon.showMessage.call_count, 2)
 
 
 if __name__ == "__main__":
