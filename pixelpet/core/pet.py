@@ -11,6 +11,7 @@ from .activity_monitor import ActivityMonitor
 class Pet:
     """Main pet class managing all pet systems."""
 
+    STAT_DECAY_INTERVAL = 30 * 60
     SPECIES = ["Cat", "Dog", "Blob", "Frog", "Robot"]
     PERSONALITIES = ["Lazy", "Energetic", "Shy", "Playful", "Chaotic", "Curious", "Grumpy"]
     FAVORITE_FOODS = {
@@ -45,6 +46,7 @@ class Pet:
         self.is_sleeping = False
         self.event_system = EventSystem()
         self.activity_monitor = ActivityMonitor()
+        self.decay_timer = 0
         self.last_update = time.time()
         self.created_time = time.time()
 
@@ -96,9 +98,13 @@ class Pet:
         if user_woke_up and self.is_sleeping:
             self.wake_up()
 
-        # Update stats if not sleeping
+        # Apply one gentle decay pulse for each 30 minutes spent awake.
         if not self.is_sleeping:
-            self.stats.decay()
+            self.decay_timer += dt
+            decay_periods = int(self.decay_timer // self.STAT_DECAY_INTERVAL)
+            if decay_periods:
+                self.stats.decay(decay_periods)
+                self.decay_timer %= self.STAT_DECAY_INTERVAL
 
         # Update mood
         self.mood = MoodSystem.calculate_mood(self.stats)

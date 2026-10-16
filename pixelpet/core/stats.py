@@ -36,9 +36,14 @@ class Stats:
         self.happiness = max(0, min(100, self.happiness + happiness))
         self.cleanliness = max(0, min(100, self.cleanliness + cleanliness))
 
-    def decay(self):
-        """Gradually decrease stats over time."""
-        self.modify(hunger=-2, energy=-1, happiness=-1, cleanliness=-1)
+    def decay(self, periods=1):
+        """Decrease stats once for each elapsed decay period."""
+        self.modify(
+            hunger=-2 * periods,
+            energy=-1 * periods,
+            happiness=-1 * periods,
+            cleanliness=-1 * periods,
+        )
 
     def get_average(self):
         """Get the average of all stats."""
