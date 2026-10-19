@@ -1,4 +1,6 @@
 """Setup window for creating a new pet."""
+from pixelpet.core.pet import Pet
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -147,12 +149,9 @@ class SetupWindow(QWidget):
         self.setLayout(main_layout)
 
     def create_pet(self):
-        """Create the pet with user input."""
-        name = self.name_input.text().strip()
-        if not name:
-            name = "Mochi"
-
-        species = self.species_combo.currentText()
+        """Create the pet with sanitized user input."""
+        name = Pet.normalize_name(self.name_input.text())
+        species = Pet.normalize_species(self.species_combo.currentText())
 
         if self.setup_complete_callback:
             self.setup_complete_callback({"name": name, "species": species})

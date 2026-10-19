@@ -1,6 +1,7 @@
 """Main Pet class for PixelPet."""
-import time
 import random
+import re
+import time
 from .stats import Stats
 from .mood import MoodSystem
 from .progression import Progression
@@ -21,6 +22,40 @@ class Pet:
         "Frog": "Flies",
         "Robot": "Electricity",
     }
+    MAX_NAME_LENGTH = 24
+
+    @classmethod
+    def normalize_name(cls, name):
+        """Normalize user-facing pet names to a safe, readable format."""
+        if not isinstance(name, str):
+            return "Mochi"
+
+        cleaned = " ".join(name.strip().split())
+        if not cleaned:
+            return "Mochi"
+
+        cleaned = re.sub(r"[^A-Za-z0-9' -]", "", cleaned)
+        cleaned = " ".join(cleaned.split())
+        if not cleaned:
+            return "Mochi"
+
+        cleaned = cleaned[: cls.MAX_NAME_LENGTH].rstrip()
+        if not cleaned:
+            return "Mochi"
+        return cleaned
+
+    @classmethod
+    def normalize_species(cls, species):
+        """Accept common species inputs and normalize them to a known species."""
+        if not isinstance(species, str):
+            return random.choice(cls.SPECIES)
+
+        normalized = species.strip()
+        for valid_species in cls.SPECIES:
+            if normalized.lower() == valid_species.lower():
+                return valid_species
+
+        return random.choice(cls.SPECIES)
 
     def __init__(
         self,
@@ -33,10 +68,10 @@ class Pet:
         room_theme="Cozy",
         room_furniture=None,
     ):
-        self.name = name
-        self.species = species
+        self.name = self.normalize_name(name)
+        self.species = self.normalize_species(species)
         self.personality = personality or random.choice(self.PERSONALITIES)
-        self.favorite_food = self.FAVORITE_FOODS.get(species, "Anything")
+        self.favorite_food = self.FAVORITE_FOODS.get(self.species, "Anything")
         self.stats = stats or Stats()
         self.progression = progression or Progression()
         self.age = age
