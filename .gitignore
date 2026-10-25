@@ -59,14 +59,5 @@ desktop.ini
 *.db
 *.sqlite
 
-# Test files
-test_*.py
-*_test.py
-!tests/test_app_settings.py
-!tests/test_pet_decay.py
-!tests/test_save_manager.py
-!tests/test_settings_manager.py
-!tests/test_startup_manager.py
-
 # Qodo (seen in project)
 .qodo/
