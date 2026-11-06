@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 
 from pixelpet.core.pet import Pet
 from pixelpet.data.save_manager import SaveManager
@@ -30,22 +31,53 @@ class SaveManagerTests(unittest.TestCase):
         self.assertEqual(backup_data["name"], "Mochi")
         self.assertEqual(json.loads(self.save_manager.save_file.read_text(encoding="utf-8"))["name"], "Mochi v2")
 
-    def test_save_pet_retains_only_recent_timestamped_backups(self):
+    def test_backup_retention_keeps_recent_hourly_and_older_daily_snapshots(self):
         pet = Pet(name="Mochi", species="Cat")
-        self.save_manager.MAX_BACKUPS = 3
+        now = datetime.now().replace(minute=0, second=0, microsecond=0)
+        snapshots = [
+            now - timedelta(minutes=10),
+            now - timedelta(minutes=30),
+            now - timedelta(hours=3),
+            now - timedelta(days=1, hours=1),
+            now - timedelta(days=1, hours=2),
+            now - timedelta(days=10),
+            now - timedelta(days=31),
+        ]
+        for index, timestamp in enumerate(snapshots):
+            backup_path = self.save_manager.backup_dir / (
+                f"pet_save.json.{timestamp.strftime('%Y%m%d-%H%M%S_%f')}.bak"
+            )
+            backup_path.write_text(str(index), encoding="utf-8")
+
+        self.save_manager._prune_backups(self.save_manager.save_file)
+
+        backups = sorted(
+            path.read_text(encoding="utf-8")
+            for path in self.save_manager.backup_dir.glob("pet_save.json.*.bak")
+        )
+        self.assertEqual(backups, ["0", "2", "3", "5"])
+
+    def test_corrupted_pet_save_recovers_and_restores_latest_valid_backup(self):
+        pet = Pet(name="Mochi", species="Cat")
         self.save_manager.save_pet(pet)
+        pet.name = "Updated Mochi"
+        self.save_manager.save_pet(pet)
+        self.save_manager.save_file.write_text("{broken", encoding="utf-8")
 
-        for version in range(8):
-            pet.name = f"Mochi {version}"
-            self.save_manager.save_pet(pet)
+        recovered = self.save_manager.load_pet()
 
-        backups = list(
-            self.save_manager.backup_dir.glob("pet_save.json.*.bak")
+        self.assertEqual(recovered["name"], "Mochi")
+        self.assertEqual(
+            json.loads(self.save_manager.save_file.read_text(encoding="utf-8"))["name"],
+            "Mochi",
         )
-        self.assertEqual(len(backups), 3)
-        self.assertTrue(
-            (self.save_manager.save_dir / "pet_save.json.bak").exists()
+
+    def test_invalid_pet_save_without_valid_backup_returns_none(self):
+        self.save_manager.save_file.write_text(
+            json.dumps({"name": "Not a pet"}), encoding="utf-8"
         )
+
+        self.assertIsNone(self.save_manager.load_pet())
 
     def test_export_and_import_save_round_trip(self):
         pet = Pet(name="Pip", species="Dog")
@@ -108,14 +140,16 @@ class SaveManagerTests(unittest.TestCase):
         pet.name = "Mochi v2"
         self.save_manager.save_pet(pet)
 
-        backup_path = self.save_manager.get_latest_backup(self.save_manager.save_file)
-        self.assertIsNotNone(backup_path)
-
         pet.name = "Mochi v3"
         self.save_manager.save_pet(pet)
 
+        backup_path = self.save_manager.get_latest_backup(self.save_manager.save_file)
+        self.assertIsNotNone(backup_path)
         self.assertTrue(self.save_manager.restore_pet_backup(backup_path))
-        self.assertEqual(json.loads(self.save_manager.save_file.read_text(encoding="utf-8"))["name"], "Mochi")
+        self.assertEqual(
+            json.loads(self.save_manager.save_file.read_text(encoding="utf-8"))["name"],
+            "Mochi v2",
+        )
 
     def test_restore_pet_backup_rejects_invalid_backup(self):
         backup_path = self.save_manager.backup_dir / "invalid.bak"

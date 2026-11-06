@@ -6,17 +6,20 @@ import os
 import shutil
 import tempfile
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
 
+BACKUP_TIMESTAMP_FORMAT = "%Y%m%d-%H%M%S_%f"
+
 
 class SaveManager:
     """Manages saving and loading pet data."""
 
-    MAX_BACKUPS = 20
+    HOURLY_BACKUP_RETENTION = timedelta(hours=24)
+    DAILY_BACKUP_RETENTION = timedelta(days=30)
 
     def __init__(self, save_dir=None):
         if save_dir is None:
@@ -34,7 +37,7 @@ class SaveManager:
     def _backup_file(self, file_path):
         """Create a backup copy before overwriting a JSON save file."""
         if file_path.exists():
-            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S_%f")
+            timestamp = datetime.now().strftime(BACKUP_TIMESTAMP_FORMAT)
             backup_path = self.backup_dir / f"{file_path.name}.{timestamp}.bak"
             shutil.copy2(file_path, backup_path)
 
@@ -46,21 +49,45 @@ class SaveManager:
         return None
 
     def _prune_backups(self, file_path):
-        """Keep only the most recent timestamped backups for a save file."""
-        backups = sorted(
-            self.backup_dir.glob(f"{file_path.name}.*.bak"),
-            key=lambda path: path.name,
-            reverse=True,
-        )
-        for backup_path in backups[self.MAX_BACKUPS:]:
-            backup_path.unlink()
+        """Keep hourly snapshots for a day and daily snapshots for 30 days."""
+        now = datetime.now()
+        retained = {}
+        for backup_path in self.backup_dir.glob(f"{file_path.name}.*.bak"):
+            timestamp_text = backup_path.name[
+                len(file_path.name) + 1 : -len(".bak")
+            ]
+            try:
+                timestamp = datetime.strptime(
+                    timestamp_text, BACKUP_TIMESTAMP_FORMAT
+                )
+            except ValueError:
+                continue
+
+            age = now - timestamp
+            if age < timedelta(0):
+                bucket = ("future", timestamp_text)
+            elif age <= self.HOURLY_BACKUP_RETENTION:
+                bucket = ("hour", timestamp.strftime("%Y%m%d-%H"))
+            elif age <= self.DAILY_BACKUP_RETENTION:
+                bucket = ("day", timestamp.strftime("%Y%m%d"))
+            else:
+                backup_path.unlink()
+                continue
+
+            existing = retained.get(bucket)
+            if existing is None or timestamp_text > existing[0]:
+                if existing is not None:
+                    existing[1].unlink()
+                retained[bucket] = (timestamp_text, backup_path)
+            else:
+                backup_path.unlink()
 
     def backup_file(self, file_path):
         """Create a timestamped backup for a save file and return its path."""
         if not file_path.exists():
             return None
 
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S_%f")
+        timestamp = datetime.now().strftime(BACKUP_TIMESTAMP_FORMAT)
         backup_path = self.backup_dir / f"{file_path.name}.{timestamp}.bak"
         shutil.copy2(file_path, backup_path)
 
@@ -84,7 +111,11 @@ class SaveManager:
     def get_latest_backup(self, file_path):
         """Return the newest backup for the given save file."""
         pattern = f"{file_path.name}.*.bak"
-        backup_candidates = sorted(self.backup_dir.glob(pattern), key=lambda path: path.stat().st_mtime, reverse=True)
+        backup_candidates = sorted(
+            self.backup_dir.glob(pattern),
+            key=lambda path: path.name,
+            reverse=True,
+        )
         if backup_candidates:
             return backup_candidates[0]
 
@@ -251,21 +282,46 @@ class SaveManager:
             return False
 
     def load_pet(self):
-        """Load pet data from JSON file."""
+        """Load pet data, recovering the newest valid backup if needed."""
         try:
             if not self.save_file.exists():
                 return None
 
-            with open(self.save_file, "r") as f:
+            with open(self.save_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            return data
-        except json.JSONDecodeError:
-            logger.error("Corrupted save file, will create new pet")
-            return None
+            if self._is_valid_pet_save(data):
+                return data
+            logger.error("Invalid pet save file; attempting backup recovery")
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            logger.error("Corrupted save file; attempting backup recovery")
         except Exception:
             logger.exception("Error loading pet")
             return None
+
+        backup_candidates = sorted(
+            self.backup_dir.glob(f"{self.save_file.name}.*.bak"),
+            key=lambda path: path.name,
+            reverse=True,
+        )
+        latest_backup = self.save_file.with_name(f"{self.save_file.name}.bak")
+        if latest_backup.exists():
+            backup_candidates.insert(0, latest_backup)
+
+        for backup_path in backup_candidates:
+            try:
+                with open(backup_path, "r", encoding="utf-8") as backup_file:
+                    backup_data = json.load(backup_file)
+                if not self._is_valid_pet_save(backup_data):
+                    continue
+                shutil.copy2(backup_path, self.save_file)
+                logger.warning("Recovered pet save from %s", backup_path.name)
+                return backup_data
+            except (OSError, ValueError):
+                logger.warning("Could not recover pet save from %s", backup_path.name)
+
+        logger.error("No valid pet save backup found")
+        return None
 
     def save_settings(self, settings):
         """Save settings to JSON file."""

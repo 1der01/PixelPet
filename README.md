@@ -18,7 +18,7 @@ A cute virtual desktop pet built with Python and PySide6 that lives on your Wind
 - **Transparent Floating Window**: The pet lives in a frameless, transparent window on your desktop
 - **System Tray Integration**: Minimize to tray, view status, and access settings
 - **Auto-Save**: Your pet's state is automatically saved locally
-- **Lightweight Activity Detection**: Pet reacts to your computer activity (privacy-friendly)
+- **Local Activity Tracking**: Pet care interactions update a local activity timer; the app does not monitor system-wide keyboard or mouse input
 
 ## Screenshots
 
@@ -30,7 +30,7 @@ A cute virtual desktop pet built with Python and PySide6 that lives on your Wind
 - **PySide6**: Qt-based GUI framework for Windows desktop integration
 - **JSON**: Local save data persistence
 - **QTimer**: Event timing and game loop
-- **Qt Animations**: Smooth UI transitions
+- **QPainter and QTimer**: Custom pet drawing, idle animation, and game updates
 
 ## Installation
 
@@ -75,10 +75,11 @@ After creation, your pet will appear on your desktop. Double-click the pet to op
 
 ```
 pixelpet/
-├── main.py                 # Application entry point
+├── main.py                 # Application and tray orchestration
 ├── ui/                     # UI components
 │   ├── pet_window.py       # Main floating pet window
 │   ├── interaction_menu.py # Interaction menu and speech bubbles
+│   ├── fun_windows.py      # Pet status and treat mini-game
 │   ├── setup_window.py     # Pet creation/setup window
 │   └── settings_window.py  # Settings dialog
 ├── core/                   # Game logic
@@ -87,10 +88,12 @@ pixelpet/
 │   ├── mood.py             # Mood calculation system
 │   ├── progression.py      # Level and progression system
 │   ├── events.py           # Random event system
-│   └── activity_monitor.py # User activity detection
+│   ├── activity_monitor.py # In-app interaction timing
+│   └── sound.py            # Sound effects and platform fallback
 ├── data/                   # Data management
 │   ├── save_manager.py     # JSON save/load functionality
-│   └── default_data.py     # Default settings and constants
+│   ├── settings_manager.py # Settings validation and defaults
+│   └── startup_manager.py  # Windows startup registration
 ├── assets/                 # Art and sound assets
 │   ├── pets/               # Pet sprites/art
 │   ├── icons/              # UI icons
@@ -124,7 +127,7 @@ The pet's mood is calculated based on its current stats:
 - High happiness + high energy → Excited
 - Good overall stats → Happy
 
-The pet's ASCII art expression changes based on its mood.
+The pet's drawn expression changes based on its mood.
 
 ### Personalities
 
@@ -170,21 +173,22 @@ Events are shown in speech bubbles with personality-specific dialogue.
 
 ## Privacy Considerations
 
-PixelPet includes lightweight activity detection to react to user behavior:
+PixelPet tracks in-app care interactions locally:
 
 **What it does:**
-- Detects when you become idle (no input for 5+ minutes)
-- Detects when you become active again
-- These detections are purely local and used for pet reactions
+- Records when a care action occurs, for local game logic
+- Applies stat decay while the pet is awake and PixelPet is running
 
 **What it does NOT do:**
+- Monitor system-wide keyboard or mouse input
 - Capture screenshots
 - Record keystrokes
 - Collect personal data
-- Send data to external servers
-- Access files on your computer
+- The desktop application does not connect to a backend service
 
-All data is stored locally in JSON format in your user's home directory (`.pixelpet` folder).
+Pet and settings data are stored locally in JSON files in your user's home
+directory (`.pixelpet` folder). Save data does not decay while the application
+is closed.
 
 ## Settings
 
@@ -203,9 +207,10 @@ Access settings via the system tray menu:
 **Start with Windows** registers PixelPet for the current Windows user. This
 option is unavailable on other platforms.
 
-PixelPet keeps the 20 most recent timestamped backups per save file, in addition
-to the quick-access latest backup. If a save fails, it reports the problem and
-logs diagnostic details for troubleshooting.
+PixelPet keeps one timestamped backup per hour for the last 24 hours and one
+per day for the preceding 30 days, in addition to the quick-access latest
+backup. If the pet save is invalid, PixelPet tries to restore the newest valid
+backup automatically. Save failures are reported and logged.
 
 ## Tests
 
@@ -215,7 +220,10 @@ Run the unit tests locally with:
 python -m unittest discover -s tests -v
 ```
 
-GitHub Actions runs this test suite on Windows for every push and pull request.
+The suite covers pet behavior and decay, progression, settings, Windows startup
+registration, activity-service validation, and save/import/backup recovery.
+GitHub Actions runs it on Windows with Python 3.12 for every push and pull
+request.
 
 ## Future Improvements
 
@@ -225,12 +233,12 @@ Potential features for future versions:
 - [ ] Additional personalities
 - [ ] More cosmetic items and customization
 - [ ] Pet-to-pet interactions (multiple pets)
-- [ ] Mini-games for earning XP
 - [ ] Weather and time-of-day effects
 - [ ] More complex event chains
-- [ ] Sound effects and music
-- [ ] Achievement system
-- [ ] Mac and Linux support
+- [ ] More character art, icons, and sound assets
+- [ ] Accessibility options, including keyboard controls and high contrast
+- [ ] Multi-pet support
+- [ ] Additional platform support
 
 ## Contributing
 

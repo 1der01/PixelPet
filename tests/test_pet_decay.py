@@ -1,7 +1,9 @@
 import unittest
+import tempfile
 from unittest.mock import patch
 
 from pixelpet.core.pet import Pet
+from pixelpet.data.save_manager import SaveManager
 
 
 class PetStatDecayTests(unittest.TestCase):
@@ -47,6 +49,18 @@ class PetStatDecayTests(unittest.TestCase):
             pet.update(pet.STAT_DECAY_INTERVAL - 1)
 
         self.assertEqual(pet.stats.to_dict(), initial_stats)
+
+    def test_stats_remain_unchanged_after_loading_an_old_save(self):
+        with tempfile.TemporaryDirectory() as save_dir:
+            save_manager = SaveManager(save_dir)
+            pet = Pet()
+            initial_stats = pet.stats.to_dict()
+            save_manager.save_pet(pet)
+
+            loaded_pet = Pet.from_dict(save_manager.load_pet())
+            loaded_pet.update(1)
+
+            self.assertEqual(loaded_pet.stats.to_dict(), initial_stats)
 
 
 if __name__ == "__main__":
