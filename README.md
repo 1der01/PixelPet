@@ -207,6 +207,16 @@ PixelPet keeps the 20 most recent timestamped backups per save file, in addition
 to the quick-access latest backup. If a save fails, it reports the problem and
 logs diagnostic details for troubleshooting.
 
+## Tests
+
+Run the unit tests locally with:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+GitHub Actions runs this test suite on Windows for every push and pull request.
+
 ## Future Improvements
 
 Potential features for future versions:
