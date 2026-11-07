@@ -2,7 +2,7 @@
 
 A cute virtual desktop pet built with Python and PySide6 that lives on your Windows desktop. PixelPet reacts to user interactions, changes mood over time, performs idle animations, and generates random events. It's designed to feel like a fun, polished indie desktop companion rather than a basic programming demo.
 
-![PixelPet](https://img.shields.io/badge/Python-3.8+-blue.svg)
+![PixelPet](https://img.shields.io/badge/Python-3.10+-blue.svg)
 ![PySide6](https://img.shields.io/badge/PySide6-6.6+-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
@@ -15,18 +15,14 @@ A cute virtual desktop pet built with Python and PySide6 that lives on your Wind
 - **Progression System**: Level up your pet through interactions and unlock cosmetic items
 - **Pet Status Panel**: Review needs, XP, care goals, affection, achievements, and accessories
 - **Treat Catch Mini-Game**: Catch treats for XP, with a one-time Golden Bell reward for a high score
-- **Transparent Floating Window**: The pet lives in a frameless, transparent window on your desktop
+- **Custom-Drawn Pet**: Animated pet artwork in a frameless, transparent desktop window
 - **System Tray Integration**: Minimize to tray, view status, and access settings
 - **Auto-Save**: Your pet's state is automatically saved locally
 - **Local Activity Tracking**: Pet care interactions update a local activity timer; the app does not monitor system-wide keyboard or mouse input
 
-## Screenshots
-
-*Coming soon - Add screenshots of the pet window, interaction menu, and settings*
-
 ## Technology Stack
 
-- **Python 3.8+**: Core application logic
+- **Python 3.10+**: Core application logic
 - **PySide6**: Qt-based GUI framework for Windows desktop integration
 - **JSON**: Local save data persistence
 - **QTimer**: Event timing and game loop
@@ -36,26 +32,42 @@ A cute virtual desktop pet built with Python and PySide6 that lives on your Wind
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Windows 10 or higher (for system tray and desktop integration)
 
 ### Setup
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/pixelpet.git
-cd pixelpet
+git clone https://github.com/1der01/PixelPet.git
+cd PixelPet
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
+2. Create and activate a virtual environment in PowerShell:
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
 ```
 
-3. Run the application:
+3. Install and run PixelPet:
 ```bash
+python -m pip install -e .
 python main.py
 ```
+
+### Build a portable Windows executable
+
+Build on Windows with Python 3.10 or newer:
+
+```powershell
+python -m pip install -e ".[build]"
+python -m PyInstaller --noconfirm --clean --onefile --windowed --name PixelPet main.py
+```
+
+The standalone executable is written to `dist\PixelPet.exe`. It does not
+require Python to be installed on the target computer. The GitHub Actions
+workflow also builds this executable and publishes it as a downloadable
+workflow artifact; it is not an installer or a signed release.
 
 ## How to Run
 
@@ -97,13 +109,13 @@ pixelpet/
 │   ├── save_manager.py     # JSON save/load functionality
 │   ├── settings_manager.py # Settings validation and defaults
 │   └── startup_manager.py  # Windows startup registration
-├── assets/                 # Art and sound assets
-│   ├── pets/               # Pet sprites/art
-│   ├── icons/              # UI icons
-│   └── sounds/             # Sound effects
-├── requirements.txt        # Python dependencies
+├── pyproject.toml          # Project metadata and dependencies
+├── requirements.txt        # Editable install shortcut
 └── README.md              # This file
 ```
+
+Pet artwork is drawn by the UI. Optional WAV sound files can be placed in
+`pixelpet/assets/sounds/`; without them, PixelPet uses the platform fallback.
 
 ## How the Pet System Works
 
@@ -225,8 +237,8 @@ python -m unittest discover -s tests -v
 
 The suite covers pet behavior and decay, progression, settings, Windows startup
 registration, activity-service validation, and save/import/backup recovery.
-GitHub Actions runs it on Windows with Python 3.12 for every push and pull
-request.
+GitHub Actions runs it on Windows with Python 3.10, 3.12, and 3.14 for every
+push and pull request. The workflow also builds a portable Windows executable.
 
 ## Future Improvements
 

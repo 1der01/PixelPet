@@ -11,24 +11,25 @@ python main.py
 
 Run all unit tests:
 ```bash
-python -m unittest discover tests/ -v
+python -m unittest discover -s tests -v
 ```
 
-Run specific test file:
+The suite currently covers activity service, app and settings behavior, pet
+behavior and decay, the pet window, progression, save recovery, and Windows
+startup registration. CI runs on Windows with Python 3.10, 3.12, and 3.14.
+
+## Packaging
+
+Install the project and runtime dependencies:
 ```bash
-python -m unittest tests.test_stats
-python -m unittest tests.test_pet
+python -m pip install -e .
 ```
 
-Test coverage includes:
-- `tests/test_stats.py` - Stat management (11 tests)
-- `tests/test_mood.py` - Mood calculation (13 tests)
-- `tests/test_progression.py` - Level and XP system (13 tests)
-- `tests/test_pet.py` - Pet class and game logic (23 tests)
-- `tests/test_events.py` - Random event system (13 tests)
-- `tests/test_save_manager.py` - Save/load functionality (13 tests)
-
-Total: 86 tests (all passing)
+Build the portable Windows executable:
+```powershell
+python -m pip install -e ".[build]"
+python -m PyInstaller --noconfirm --clean --onefile --windowed --name PixelPet main.py
+```
 
 ## Save Data Location
 
@@ -41,8 +42,8 @@ Save data is stored in the user's home directory:
 - `pixelpet/core/` - Game logic (pet, stats, mood, progression, events, activity monitoring, sound)
 - `pixelpet/ui/` - UI components (pet window, interaction menu, setup window, settings window)
 - `pixelpet/data/` - Data management (save manager, default data)
-- `pixelpet/assets/` - Art and sound assets (pets, icons, sounds)
-- `tests/` - Unit tests for core systems
+- `tests/` - Unit tests for game logic, UI, persistence, and settings
+- `pyproject.toml` - Project metadata, dependencies, and build extra
 
 ## Key Features Implemented
 
@@ -59,11 +60,13 @@ Save data is stored in the user's home directory:
 - Auto-save every minute
 - Settings dialog with various options
 - Pet reset functionality
-- Comprehensive unit test coverage (86 tests)
+- Unit tests for core logic, persistence, UI behavior, and settings
 
 ## Dependencies
 
+- Python >= 3.10
 - PySide6 >= 6.6.0
+- PyInstaller >= 6.11 (optional; for Windows executable builds)
 
 ## Development Notes
 
@@ -74,7 +77,7 @@ Save data is stored in the user's home directory:
 - Random events occur every 3 minutes with 30% probability
 - Stats decay gradually over time (not punishing)
 - Sound effects use Windows beeps as fallback if no sound files present
-- To add actual sound files, place WAV files in `pixelpet/assets/sounds/`:
+- Optional sound files can be placed in `pixelpet/assets/sounds/`:
   - feed.wav, pet.wav, play.wav, clean.wav, sleep.wav
   - event.wav, level_up.wav, notification.wav
 - All core game logic is tested with unit tests
