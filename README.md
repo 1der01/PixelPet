@@ -69,7 +69,10 @@ On first launch, you'll be prompted to create your pet:
 - Select a species (Cat, Dog, Blob, Frog, or Robot)
 - A personality will be randomly assigned
 
-After creation, your pet will appear on your desktop. Double-click the pet to open the interaction menu, or right-click the system tray icon for options.
+After creation, your pet will appear on your desktop. Double-click the pet, or
+focus it and press **Space** or **Enter**, to open the interaction menu. Use
+**Tab** and **Enter** to navigate and choose menu actions, or right-click the
+system tray icon for application options.
 
 ## Project Structure
 
@@ -236,7 +239,7 @@ Potential features for future versions:
 - [ ] Weather and time-of-day effects
 - [ ] More complex event chains
 - [ ] More character art, icons, and sound assets
-- [ ] Accessibility options, including keyboard controls and high contrast
+- [ ] Expanded accessibility options, including high contrast and reduced motion
 - [ ] Multi-pet support
 - [ ] Additional platform support
 

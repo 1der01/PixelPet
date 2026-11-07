@@ -270,6 +270,10 @@ class SettingsWindow(QWidget):
         layout.addWidget(transparency_label)
 
         self.transparency_slider = QSlider(Qt.Horizontal)
+        self.transparency_slider.setAccessibleName("Pet transparency")
+        self.transparency_slider.setAccessibleDescription(
+            "Adjust how transparent the desktop pet window appears."
+        )
         self.transparency_slider.setRange(50, 255)
         self.transparency_slider.setValue(int(self.settings.get("pet_transparency", 255)))
         self.transparency_slider.setStyleSheet(self.SLIDER_STYLE)
@@ -281,6 +285,10 @@ class SettingsWindow(QWidget):
         layout.addWidget(anim_label)
 
         self.anim_slider = QSlider(Qt.Horizontal)
+        self.anim_slider.setAccessibleName("Animation intensity")
+        self.anim_slider.setAccessibleDescription(
+            "Adjust the speed and intensity of pet animations. Set to zero to pause them."
+        )
         self.anim_slider.setRange(0, 200)
         self.anim_slider.setValue(int(float(self.settings.get("animation_intensity", 1.0)) * 100))
         self.anim_slider.setStyleSheet(self.SLIDER_STYLE)

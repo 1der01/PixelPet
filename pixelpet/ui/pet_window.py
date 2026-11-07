@@ -277,6 +277,10 @@ class PetCanvas(QWidget):
         painter.drawText(
             0, height - 2, width, 18, Qt.AlignHCenter | Qt.AlignTop, self.pet.name
         )
+        if self.parentWidget() is not None and self.parentWidget().hasFocus():
+            painter.setPen(QPen(QColor("#FFFFFF"), 2, Qt.DashLine))
+            painter.setBrush(Qt.NoBrush)
+            painter.drawRoundedRect(2, 2, width - 4, height - 4, 8, 8)
         painter.end()
         _event.accept()
 
@@ -310,6 +314,8 @@ class PetWindow(QWidget):
             | Qt.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setToolTip("Double-click or press Space/Enter to open the care menu.")
 
         # Set initial size
         self.setFixedSize(200, 200)
@@ -379,6 +385,30 @@ class PetWindow(QWidget):
     def update_pet_display(self):
         """Update the pet's visual display."""
         self.setWindowTitle(f"{self.pet.name} - {self.pet.mood}")
+        self.setAccessibleName(
+            f"{self.pet.name}, {self.pet.species}, {self.pet.mood}"
+        )
+        self.setAccessibleDescription(
+            "Virtual desktop pet. Press Space or Enter to open the care menu. "
+            "Double-click to open the same menu."
+        )
+        self.pet_canvas.update()
+
+    def keyPressEvent(self, event):
+        """Open the care menu from the keyboard when the pet window is focused."""
+        if event.key() in (Qt.Key_Space, Qt.Key_Return, Qt.Key_Enter):
+            if self.interaction_callback:
+                self.interaction_callback("menu", None)
+            event.accept()
+            return
+        super().keyPressEvent(event)
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        self.pet_canvas.update()
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
         self.pet_canvas.update()
 
     def show_reaction(self, action):

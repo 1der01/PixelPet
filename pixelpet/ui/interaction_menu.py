@@ -51,6 +51,7 @@ class InteractionMenu(QWidget):
         layout.addWidget(title)
 
         # Action buttons
+        self.action_buttons = []
         buttons = [
             ("Feed", "🍖", self.pet.feed),
             ("Pet", "✋", self.pet.pet),
@@ -63,6 +64,7 @@ class InteractionMenu(QWidget):
             btn = self.create_button(f"{icon} {text}")
             btn.clicked.connect(partial(self.perform_action, action))
             layout.addWidget(btn)
+            self.action_buttons.append(btn)
 
         status_button = self.create_button("📊 My Pet")
         status_button.clicked.connect(
@@ -134,6 +136,8 @@ class InteractionMenu(QWidget):
         """Show menu at specified position."""
         self.move(pos)
         self.show()
+        if self.action_buttons:
+            self.action_buttons[0].setFocus()
 
     def set_action_callback(self, callback):
         """Set callback for action events."""
