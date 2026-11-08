@@ -269,7 +269,9 @@ Potential features for future versions:
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for
+development setup, test instructions, and pull request guidance. Use the
+GitHub issue templates to report bugs or suggest features.
 
 ## License
 
