@@ -1,6 +1,6 @@
 import os
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -39,6 +39,23 @@ class PetWindowAccessibilityTests(unittest.TestCase):
 
         self.assertEqual(self.callback.call_count, 3)
         self.callback.assert_called_with("menu", None)
+
+    def test_game_update_uses_elapsed_time_since_previous_tick(self):
+        self.window._last_game_update = 100
+        with patch("pixelpet.ui.pet_window.time.time", return_value=163):
+            with patch.object(self.window.pet, "update", return_value=None) as update:
+                self.window.update_game()
+
+        update.assert_called_once_with(63)
+
+    def test_game_update_ignores_negative_elapsed_time(self):
+        self.window._last_game_update = 100
+        with patch("pixelpet.ui.pet_window.time.time", return_value=90):
+            with patch.object(self.window.pet, "update", return_value=None) as update:
+                self.window.update_game()
+
+        update.assert_called_once_with(0.0)
+        self.assertEqual(self.window._last_game_update, 90)
 
 
 if __name__ == "__main__":

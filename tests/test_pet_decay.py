@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from pixelpet.core.pet import Pet
 from pixelpet.data.save_manager import SaveManager
@@ -49,6 +49,21 @@ class PetStatDecayTests(unittest.TestCase):
             pet.update(pet.STAT_DECAY_INTERVAL - 1)
 
         self.assertEqual(pet.stats.to_dict(), initial_stats)
+
+    def test_waking_after_a_long_pause_does_not_decay_while_previously_asleep(self):
+        pet = Pet()
+        pet.is_sleeping = True
+        pet.activity_monitor.update = Mock(return_value=True)
+        initial_stats = pet.stats.to_dict()
+
+        with patch("pixelpet.core.events.random.random", return_value=1.0):
+            pet.update(pet.STAT_DECAY_INTERVAL * 2)
+
+        self.assertFalse(pet.is_sleeping)
+        self.assertEqual(
+            pet.stats.to_dict(),
+            {**initial_stats, "energy": min(100, initial_stats["energy"] + 30)},
+        )
 
     def test_stats_remain_unchanged_after_loading_an_old_save(self):
         with tempfile.TemporaryDirectory() as save_dir:

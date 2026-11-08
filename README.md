@@ -128,9 +128,11 @@ Your pet has four main stats, each ranging from 0-100:
 - **Happiness**: Increases with interactions. Decreases if neglected.
 - **Cleanliness**: Decreases over time. Clean your pet to maintain it.
 
-While awake, stats decrease gently once every 30 minutes of play: hunger by 2
-points and the other stats by 1 point. Sleeping pauses decay, and stats do not
-decay while the application is closed.
+While awake, stats decrease gently once every 30 minutes: hunger by 2 points
+and the other stats by 1 point. Sleeping pauses decay. PixelPet uses elapsed
+wall-clock time while it is running, so decay catches up after the computer
+sleeps or the app is suspended. Stats do not decay while the application is
+closed.
 
 ### Mood
 

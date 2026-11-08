@@ -126,6 +126,8 @@ class Pet:
         self.last_update = time.time()
         self.age += dt
 
+        was_sleeping = self.is_sleeping
+
         # Check for user becoming active
         user_woke_up = self.activity_monitor.update()
 
@@ -134,7 +136,7 @@ class Pet:
             self.wake_up()
 
         # Apply one gentle decay pulse for each 30 minutes spent awake.
-        if not self.is_sleeping:
+        if not was_sleeping:
             self.decay_timer += dt
             decay_periods = int(self.decay_timer // self.STAT_DECAY_INTERVAL)
             if decay_periods:

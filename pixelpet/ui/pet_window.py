@@ -1,5 +1,6 @@
 """Main pet window for PixelPet."""
 import math
+import time
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -335,6 +336,8 @@ class PetWindow(QWidget):
 
     def setup_timers(self):
         """Setup update timers."""
+        self._last_game_update = time.time()
+
         # Game update timer (1 second)
         self.game_timer = QTimer()
         self.game_timer.timeout.connect(self.update_game)
@@ -347,8 +350,10 @@ class PetWindow(QWidget):
 
     def update_game(self):
         """Update game state."""
-        # Update pet with 1 second delta time
-        event_result = self.pet.update(1.0)
+        current_time = time.time()
+        elapsed = max(0.0, current_time - self._last_game_update)
+        self._last_game_update = current_time
+        event_result = self.pet.update(elapsed)
 
         # Update display
         self.update_pet_display()
