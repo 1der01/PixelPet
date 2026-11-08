@@ -353,13 +353,14 @@ class PetWindow(QWidget):
         current_time = time.time()
         elapsed = max(0.0, current_time - self._last_game_update)
         self._last_game_update = current_time
+        previous_mood = self.pet.mood
+        previous_display_state = (previous_mood, self.pet.is_sleeping)
         event_result = self.pet.update(elapsed)
 
-        # Update display
-        self.update_pet_display()
+        if previous_display_state != (self.pet.mood, self.pet.is_sleeping):
+            self.update_pet_display()
 
-        # Notify main app to update tray tooltip
-        if self.interaction_callback:
+        if previous_mood != self.pet.mood and self.interaction_callback:
             self.interaction_callback("update_tray", None)
 
         # Handle events

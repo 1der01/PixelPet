@@ -57,6 +57,35 @@ class PetWindowAccessibilityTests(unittest.TestCase):
         update.assert_called_once_with(0.0)
         self.assertEqual(self.window._last_game_update, 90)
 
+    def test_game_update_skips_display_and_tray_refresh_when_state_is_unchanged(self):
+        with patch.object(self.window, "update_pet_display") as update_display:
+            self.window.update_game()
+
+        update_display.assert_not_called()
+        self.callback.assert_not_called()
+
+    def test_game_update_refreshes_display_and_tray_when_mood_changes(self):
+        def change_mood(_elapsed):
+            self.window.pet.mood = "Hungry"
+
+        with patch.object(self.window.pet, "update", side_effect=change_mood):
+            with patch.object(self.window, "update_pet_display") as update_display:
+                self.window.update_game()
+
+        update_display.assert_called_once_with()
+        self.callback.assert_called_once_with("update_tray", None)
+
+    def test_game_update_refreshes_display_when_sleep_state_changes(self):
+        def put_pet_to_sleep(_elapsed):
+            self.window.pet.is_sleeping = True
+
+        with patch.object(self.window.pet, "update", side_effect=put_pet_to_sleep):
+            with patch.object(self.window, "update_pet_display") as update_display:
+                self.window.update_game()
+
+        update_display.assert_called_once_with()
+        self.callback.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
