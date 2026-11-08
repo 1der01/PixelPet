@@ -86,6 +86,10 @@ focus it and press **Space** or **Enter**, to open the interaction menu. Use
 **Tab** and **Enter** to navigate and choose menu actions, or right-click the
 system tray icon for application options.
 
+The interaction menu, pet stats, experience bar, and accessory selector have
+screen-reader names. In the Catch Treats mini-game, focus the treat and press
+**Space** or **Enter** to catch it.
+
 ## Project Structure
 
 ```

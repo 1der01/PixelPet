@@ -45,6 +45,7 @@ class InteractionMenu(QWidget):
 
         # Title
         title = QLabel(f"What would you like to do with {self.pet.name}?")
+        title.setAccessibleName("Care menu")
         title.setFont(QFont("Arial", 10, QFont.Bold))
         title.setStyleSheet("color: white;")
         title.setAlignment(Qt.AlignCenter)
@@ -53,26 +54,26 @@ class InteractionMenu(QWidget):
         # Action buttons
         self.action_buttons = []
         buttons = [
-            ("Feed", "🍖", self.pet.feed),
-            ("Pet", "✋", self.pet.pet),
-            ("Play", "🎾", self.pet.play),
-            ("Clean", "🧹", self.pet.clean),
-            ("Sleep", "😴", self.pet.sleep),
+            ("Feed", "🍖", self.pet.feed, f"Feed {self.pet.name}"),
+            ("Pet", "✋", self.pet.pet, f"Pet {self.pet.name}"),
+            ("Play", "🎾", self.pet.play, f"Play with {self.pet.name}"),
+            ("Clean", "🧹", self.pet.clean, f"Clean {self.pet.name}"),
+            ("Sleep", "😴", self.pet.sleep, f"Put {self.pet.name} to sleep"),
         ]
 
-        for text, icon, action in buttons:
-            btn = self.create_button(f"{icon} {text}")
+        for text, icon, action, accessible_name in buttons:
+            btn = self.create_button(f"{icon} {text}", accessible_name)
             btn.clicked.connect(partial(self.perform_action, action))
             layout.addWidget(btn)
             self.action_buttons.append(btn)
 
-        status_button = self.create_button("📊 My Pet")
+        status_button = self.create_button("📊 My Pet", f"{self.pet.name}'s status")
         status_button.clicked.connect(
             lambda: self.action_callback and self.action_callback("status", None)
         )
         layout.addWidget(status_button)
 
-        game_button = self.create_button("🍪 Catch Treats")
+        game_button = self.create_button("🍪 Catch Treats", "Play Catch Treats")
         game_button.clicked.connect(
             lambda: self.action_callback and self.action_callback("treat_game", None)
         )
@@ -90,9 +91,10 @@ class InteractionMenu(QWidget):
         self.setFixedSize(210, 390)
 
     @staticmethod
-    def create_button(text):
+    def create_button(text, accessible_name=None):
         """Create a consistently styled interaction button."""
         button = QPushButton(text)
+        button.setAccessibleName(accessible_name or text)
         button.setFont(QFont("Arial", 9))
         button.setStyleSheet(
             """

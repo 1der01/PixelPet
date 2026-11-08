@@ -33,22 +33,32 @@ class PetStatusWindow(QDialog):
 
         layout = QVBoxLayout(self)
         self.heading = QLabel()
+        self.heading.setAccessibleName(f"{pet.name}'s status")
         self.heading.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self.heading)
 
         self.stat_bars = {}
         for stat_id, label in self.STAT_NAMES:
             row = QHBoxLayout()
-            row.addWidget(QLabel(label))
+            stat_label = QLabel(label)
             bar = QProgressBar()
             bar.setRange(0, 100)
             bar.setTextVisible(True)
+            bar.setAccessibleName(label)
+            bar.setAccessibleDescription(f"{label} level from 0 to 100")
+            stat_label.setBuddy(bar)
+            row.addWidget(stat_label)
             self.stat_bars[stat_id] = bar
             row.addWidget(bar)
             layout.addLayout(row)
 
         self.level_label = QLabel()
         self.xp_bar = QProgressBar()
+        self.level_label.setBuddy(self.xp_bar)
+        self.xp_bar.setAccessibleName("Experience")
+        self.xp_bar.setAccessibleDescription(
+            "Experience progress toward the next level"
+        )
         layout.addWidget(self.level_label)
         layout.addWidget(self.xp_bar)
 
@@ -70,6 +80,8 @@ class PetStatusWindow(QDialog):
         self.accessory_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(self.accessory_label)
         self.accessory_selector = QComboBox()
+        self.accessory_label.setBuddy(self.accessory_selector)
+        self.accessory_selector.setAccessibleName("Equipped accessory")
         self.accessory_selector.addItem("None")
         self.accessory_selector.currentTextChanged.connect(
             self.handle_accessory_selection
@@ -158,10 +170,12 @@ class TreatCatchWindow(QDialog):
 
         layout = QVBoxLayout(self)
         self.instruction = QLabel("Click the treat before it hops away!")
+        self.instruction.setAccessibleName("Game instructions and result")
         self.instruction.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.instruction)
 
         self.score_label = QLabel()
+        self.score_label.setAccessibleName("Treats caught")
         self.score_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.score_label)
 
@@ -175,15 +189,21 @@ class TreatCatchWindow(QDialog):
 
         self.treat_button = QPushButton("🍪 Treat")
         self.treat_button.setParent(self.playfield)
+        self.treat_button.setAccessibleName("Catch treat")
+        self.treat_button.setAccessibleDescription(
+            "Press Space or Enter to catch the treat. The treat moves periodically."
+        )
         self.treat_button.setFixedSize(90, 38)
         self.treat_button.clicked.connect(self.catch_treat)
         self.place_treat()
 
         self.timer_label = QLabel()
+        self.timer_label.setAccessibleName("Time remaining")
         self.timer_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.timer_label)
 
         self.close_button = QPushButton("Close")
+        self.close_button.setAccessibleName("Close treat game")
         self.close_button.setEnabled(False)
         self.close_button.clicked.connect(self.accept)
         layout.addWidget(self.close_button)
