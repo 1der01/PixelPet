@@ -112,6 +112,7 @@ pixelpet/
 ├── data/                   # Data management
 │   ├── save_manager.py     # JSON save/load functionality
 │   ├── settings_manager.py # Settings validation and defaults
+│   ├── activity_service.py # Optional authenticated activity integration
 │   └── startup_manager.py  # Windows startup registration
 ├── pyproject.toml          # Project metadata and dependencies
 ├── requirements.txt        # Editable install shortcut
@@ -204,12 +205,17 @@ PixelPet tracks in-app care interactions locally:
 - Monitor system-wide keyboard or mouse input
 - Capture screenshots
 - Record keystrokes
-- Collect personal data
-- The desktop application does not connect to a backend service
+- Send pet or settings data to a backend from the desktop application
 
 Pet and settings data are stored locally in JSON files in your user's home
 directory (`.pixelpet` folder). Save data does not decay while the application
 is closed.
+
+The source also includes an optional `ActivityService` integration that accepts
+an authenticated Supabase-compatible client. The desktop application does not
+initialize or call this service, and it has no configured backend connection.
+Only an external caller that supplies a client and explicitly invokes the
+service can send activity records to a backend.
 
 ## Settings
 
