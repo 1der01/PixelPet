@@ -3,7 +3,7 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QFrame
 
 from pixelpet.core.pet import Pet
 from pixelpet.ui.fun_windows import PetStatusWindow, TreatCatchWindow
@@ -43,6 +43,16 @@ class PetUiAccessibilityTests(unittest.TestCase):
     def test_status_progress_bars_and_accessory_selector_are_named(self):
         window = self.create_window(PetStatusWindow)
 
+        self.assertIn("QFrame#statusCard", window.styleSheet())
+        self.assertEqual(
+            [
+                card.objectName()
+                for card in window.findChildren(QFrame)
+                if card.objectName() == "statusCard"
+            ],
+            ["statusCard", "statusCard"],
+        )
+        self.assertEqual(window.xp_bar.objectName(), "experienceBar")
         self.assertEqual(
             {
                 stat_id: bar.accessibleName()

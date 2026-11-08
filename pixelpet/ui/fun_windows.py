@@ -30,17 +30,76 @@ class PetStatusWindow(QDialog):
         self.accessory_callback = accessory_callback
         self.setWindowTitle(f"{pet.name}'s Status")
         self.setMinimumWidth(340)
+        self.setStyleSheet(
+            """
+            QDialog {
+                background-color: #F6F3EE;
+                color: #302B3A;
+            }
+            QFrame#statusCard {
+                background-color: #FFFFFF;
+                border: 1px solid #E5DFD7;
+                border-radius: 12px;
+            }
+            QFrame#statusCard QLabel {
+                background: transparent;
+                border: none;
+            }
+            QLabel#statusHeading {
+                color: #302B3A;
+                font-size: 19px;
+                font-weight: 700;
+            }
+            QLabel#sectionHeading {
+                color: #51465F;
+                font-size: 13px;
+                font-weight: 700;
+            }
+            QProgressBar {
+                background-color: #EEEAF3;
+                border: none;
+                border-radius: 7px;
+                color: #302B3A;
+                min-height: 18px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #62A88A;
+                border-radius: 7px;
+            }
+            QProgressBar#experienceBar::chunk {
+                background-color: #8A6BD1;
+            }
+            QComboBox {
+                background-color: #FFFFFF;
+                border: 1px solid #CFC6D9;
+                border-radius: 7px;
+                padding: 7px;
+            }
+            QComboBox:focus {
+                border: 2px solid #7352B8;
+            }
+            """
+        )
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(22, 20, 22, 22)
+        layout.setSpacing(12)
         self.heading = QLabel()
+        self.heading.setObjectName("statusHeading")
         self.heading.setAccessibleName(f"{pet.name}'s status")
-        self.heading.setStyleSheet("font-size: 18px; font-weight: bold;")
         layout.addWidget(self.heading)
 
         self.stat_bars = {}
+        stats_card = QFrame()
+        stats_card.setObjectName("statusCard")
+        stats_layout = QVBoxLayout(stats_card)
+        stats_layout.setContentsMargins(14, 12, 14, 12)
+        stats_layout.setSpacing(8)
         for stat_id, label in self.STAT_NAMES:
             row = QHBoxLayout()
             stat_label = QLabel(label)
+            stat_label.setMinimumWidth(82)
             bar = QProgressBar()
             bar.setRange(0, 100)
             bar.setTextVisible(True)
@@ -50,23 +109,31 @@ class PetStatusWindow(QDialog):
             row.addWidget(stat_label)
             self.stat_bars[stat_id] = bar
             row.addWidget(bar)
-            layout.addLayout(row)
+            stats_layout.addLayout(row)
+        layout.addWidget(stats_card)
 
+        progression_card = QFrame()
+        progression_card.setObjectName("statusCard")
+        progression_layout = QVBoxLayout(progression_card)
+        progression_layout.setContentsMargins(14, 12, 14, 12)
+        progression_layout.setSpacing(8)
         self.level_label = QLabel()
         self.xp_bar = QProgressBar()
+        self.xp_bar.setObjectName("experienceBar")
         self.level_label.setBuddy(self.xp_bar)
         self.xp_bar.setAccessibleName("Experience")
         self.xp_bar.setAccessibleDescription(
             "Experience progress toward the next level"
         )
-        layout.addWidget(self.level_label)
-        layout.addWidget(self.xp_bar)
+        progression_layout.addWidget(self.level_label)
+        progression_layout.addWidget(self.xp_bar)
 
         self.affection_label = QLabel()
-        layout.addWidget(self.affection_label)
+        progression_layout.addWidget(self.affection_label)
+        layout.addWidget(progression_card)
 
         self.section_label = QLabel("Care goals")
-        self.section_label.setStyleSheet("font-weight: bold;")
+        self.section_label.setObjectName("sectionHeading")
         layout.addWidget(self.section_label)
         self.goals_label = QLabel()
         self.goals_label.setWordWrap(True)
@@ -77,7 +144,7 @@ class PetStatusWindow(QDialog):
         layout.addWidget(self.collection_label)
 
         self.accessory_label = QLabel("Equipped accessory")
-        self.accessory_label.setStyleSheet("font-weight: bold;")
+        self.accessory_label.setObjectName("sectionHeading")
         layout.addWidget(self.accessory_label)
         self.accessory_selector = QComboBox()
         self.accessory_label.setBuddy(self.accessory_selector)
