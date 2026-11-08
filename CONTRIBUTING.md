@@ -29,8 +29,7 @@ python -m PyInstaller --noconfirm --clean --onefile --windowed --name PixelPet m
 - Update the README when user-facing behavior or setup instructions change.
 - Check that your change does not include save files, credentials, or other
   personal data.
-- Describe the problem, the solution, and how you verified it in the pull
-  request.
+- Fill in the pull request template with the problem, solution, and verification.
 
 The GitHub Actions workflow runs tests on Windows with Python 3.10, 3.12, and
 3.14 and builds the portable executable.
