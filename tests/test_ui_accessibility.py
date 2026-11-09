@@ -74,6 +74,11 @@ class PetUiAccessibilityTests(unittest.TestCase):
     def test_treat_game_exposes_keyboard_instructions_and_control_names(self):
         window = self.create_window(TreatCatchWindow)
 
+        self.assertEqual(window.size().width(), 480)
+        self.assertEqual(window.treat_button.objectName(), "treatButton")
+        self.assertEqual(window.playfield.objectName(), "treatPlayfield")
+        self.assertIn("QFrame#treatPlayfield", window.styleSheet())
+        self.assertIn("QPushButton#treatButton:focus", window.styleSheet())
         self.assertEqual(window.treat_button.accessibleName(), "Catch treat")
         self.assertIn("Space or Enter", window.treat_button.accessibleDescription())
         self.assertEqual(window.score_label.accessibleName(), "Treats caught")

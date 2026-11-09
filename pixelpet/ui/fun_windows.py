@@ -233,43 +233,118 @@ class TreatCatchWindow(QDialog):
         self.game_finished = False
 
         self.setWindowTitle(f"Catch Treats with {pet.name}!")
-        self.setFixedSize(440, 300)
+        self.setFixedSize(480, 390)
+        self.setStyleSheet(
+            """
+            QDialog {
+                background-color: #F6F3EE;
+                color: #302B3A;
+                font-family: "Segoe UI";
+            }
+            QLabel#gameInstruction {
+                color: #51465F;
+                font-size: 15px;
+                font-weight: 600;
+            }
+            QLabel#scoreLabel {
+                background-color: #EAE3F8;
+                border-radius: 10px;
+                color: #513B83;
+                font-size: 15px;
+                font-weight: 700;
+                padding: 8px;
+            }
+            QLabel#timerLabel {
+                color: #51465F;
+                font-size: 14px;
+                font-weight: 600;
+            }
+            QFrame#treatPlayfield {
+                background-color: #E8F4EB;
+                border: 2px solid #C5DDCB;
+                border-radius: 16px;
+            }
+            QPushButton#treatButton {
+                background-color: #E89B54;
+                border: 2px solid #C87534;
+                border-radius: 12px;
+                color: #302B3A;
+                font-size: 15px;
+                font-weight: 700;
+                padding: 6px;
+            }
+            QPushButton#treatButton:hover {
+                background-color: #F2B36F;
+            }
+            QPushButton#treatButton:focus {
+                border: 3px solid #513B83;
+            }
+            QPushButton#treatButton:disabled {
+                background-color: #D7C8B8;
+                border-color: #BBAA98;
+                color: #625B54;
+            }
+            QPushButton#closeGameButton {
+                background-color: #7352B8;
+                border: none;
+                border-radius: 9px;
+                color: white;
+                font-weight: 700;
+                padding: 9px;
+            }
+            QPushButton#closeGameButton:hover:enabled {
+                background-color: #60429F;
+            }
+            QPushButton#closeGameButton:focus {
+                border: 2px solid #302B3A;
+            }
+            QPushButton#closeGameButton:disabled {
+                background-color: #B7AACF;
+                color: #F6F3EE;
+            }
+            """
+        )
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(22, 18, 22, 18)
+        layout.setSpacing(10)
         self.instruction = QLabel("Click the treat before it hops away!")
+        self.instruction.setObjectName("gameInstruction")
         self.instruction.setAccessibleName("Game instructions and result")
         self.instruction.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.instruction)
 
         self.score_label = QLabel()
+        self.score_label.setObjectName("scoreLabel")
         self.score_label.setAccessibleName("Treats caught")
         self.score_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.score_label)
 
         self.playfield = QFrame()
+        self.playfield.setObjectName("treatPlayfield")
         self.playfield.setFrameShape(QFrame.StyledPanel)
-        self.playfield.setStyleSheet(
-            "QFrame { background-color: #EAF7FF; border: 1px solid #B7DDF2; }"
-        )
-        self.playfield.setFixedSize(410, 190)
+        self.playfield.setFixedSize(436, 180)
         layout.addWidget(self.playfield, alignment=Qt.AlignCenter)
 
         self.treat_button = QPushButton("🍪 Treat")
         self.treat_button.setParent(self.playfield)
+        self.treat_button.setObjectName("treatButton")
         self.treat_button.setAccessibleName("Catch treat")
         self.treat_button.setAccessibleDescription(
             "Press Space or Enter to catch the treat. The treat moves periodically."
         )
-        self.treat_button.setFixedSize(90, 38)
+        self.treat_button.setFixedSize(104, 44)
         self.treat_button.clicked.connect(self.catch_treat)
         self.place_treat()
 
         self.timer_label = QLabel()
+        self.timer_label.setObjectName("timerLabel")
         self.timer_label.setAccessibleName("Time remaining")
         self.timer_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.timer_label)
 
         self.close_button = QPushButton("Close")
+        self.close_button.setObjectName("closeGameButton")
         self.close_button.setAccessibleName("Close treat game")
         self.close_button.setEnabled(False)
         self.close_button.clicked.connect(self.accept)
