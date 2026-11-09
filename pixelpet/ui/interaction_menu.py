@@ -29,27 +29,34 @@ class InteractionMenu(QWidget):
 
         # Create main container
         container = QFrame()
+        container.setObjectName("careMenuCard")
         container.setStyleSheet(
             """
-            QFrame {
-                background-color: rgba(40, 40, 40, 230);
-                border-radius: 15px;
-                border: 2px solid rgba(255, 255, 255, 0.2);
+            QFrame#careMenuCard {
+                background-color: #F6F3EE;
+                border: 1px solid #DDD4E8;
+                border-radius: 16px;
             }
         """
         )
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setContentsMargins(14, 14, 14, 14)
+        layout.setSpacing(8)
 
         # Title
-        title = QLabel(f"What would you like to do with {self.pet.name}?")
+        title = QLabel(f"Care for {self.pet.name}")
+        title.setObjectName("careMenuTitle")
         title.setAccessibleName("Care menu")
-        title.setFont(QFont("Arial", 10, QFont.Bold))
-        title.setStyleSheet("color: white;")
+        title.setFont(QFont("Segoe UI", 13, QFont.Bold))
+        title.setStyleSheet("color: #302B3A;")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
+
+        subtitle = QLabel("Choose an action")
+        subtitle.setStyleSheet("color: #71687B; font-size: 10px;")
+        subtitle.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle)
 
         # Action buttons
         self.action_buttons = []
@@ -62,18 +69,30 @@ class InteractionMenu(QWidget):
         ]
 
         for text, icon, action, accessible_name in buttons:
-            btn = self.create_button(f"{icon} {text}", accessible_name)
+            btn = self.create_button(
+                f"{icon} {text}", accessible_name, "careActionButton"
+            )
             btn.clicked.connect(partial(self.perform_action, action))
             layout.addWidget(btn)
             self.action_buttons.append(btn)
 
-        status_button = self.create_button("📊 My Pet", f"{self.pet.name}'s status")
+        separator = QFrame()
+        separator.setObjectName("menuSeparator")
+        separator.setFrameShape(QFrame.HLine)
+        separator.setStyleSheet("color: #DED7E7;")
+        layout.addWidget(separator)
+
+        status_button = self.create_button(
+            "📊 My Pet", f"{self.pet.name}'s status", "utilityButton"
+        )
         status_button.clicked.connect(
             lambda: self.action_callback and self.action_callback("status", None)
         )
         layout.addWidget(status_button)
 
-        game_button = self.create_button("🍪 Catch Treats", "Play Catch Treats")
+        game_button = self.create_button(
+            "🍪 Catch Treats", "Play Catch Treats", "utilityButton"
+        )
         game_button.clicked.connect(
             lambda: self.action_callback and self.action_callback("treat_game", None)
         )
@@ -88,29 +107,51 @@ class InteractionMenu(QWidget):
         self.setLayout(main_layout)
 
         # Set size
-        self.setFixedSize(210, 390)
+        self.setFixedSize(228, 430)
 
     @staticmethod
-    def create_button(text, accessible_name=None):
+    def create_button(text, accessible_name=None, object_name="careActionButton"):
         """Create a consistently styled interaction button."""
         button = QPushButton(text)
+        button.setObjectName(object_name)
         button.setAccessibleName(accessible_name or text)
-        button.setFont(QFont("Arial", 9))
+        button.setFont(QFont("Segoe UI", 10, QFont.DemiBold))
         button.setStyleSheet(
             """
-            QPushButton {
-                background-color: rgba(255, 255, 255, 0.1);
-                color: white;
-                border: 1px solid rgba(255, 255, 255, 0.3);
-                border-radius: 8px;
-                padding: 8px;
-                min-width: 150px;
+            QPushButton#careActionButton {
+                background-color: #FFFFFF;
+                color: #393243;
+                border: 1px solid #DED7E7;
+                border-radius: 9px;
+                padding: 8px 10px;
+                min-width: 158px;
             }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.2);
+            QPushButton#careActionButton:hover {
+                background-color: #EEE8F8;
+                border-color: #B5A4D7;
             }
-            QPushButton:pressed {
-                background-color: rgba(255, 255, 255, 0.3);
+            QPushButton#careActionButton:focus {
+                border: 2px solid #7352B8;
+            }
+            QPushButton#careActionButton:pressed {
+                background-color: #DED4F0;
+            }
+            QPushButton#utilityButton {
+                background-color: #7352B8;
+                color: #FFFFFF;
+                border: 1px solid #60429F;
+                border-radius: 9px;
+                padding: 8px 10px;
+                min-width: 158px;
+            }
+            QPushButton#utilityButton:hover {
+                background-color: #60429F;
+            }
+            QPushButton#utilityButton:focus {
+                border: 2px solid #302B3A;
+            }
+            QPushButton#utilityButton:pressed {
+                background-color: #513B83;
             }
         """
         )

@@ -3,7 +3,7 @@ import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QFrame
+from PySide6.QtWidgets import QApplication, QFrame, QPushButton
 
 from pixelpet.core.pet import Pet
 from pixelpet.ui.fun_windows import PetStatusWindow, TreatCatchWindow
@@ -38,6 +38,17 @@ class PetUiAccessibilityTests(unittest.TestCase):
                 "Clean Mochi",
                 "Put Mochi to sleep",
             ],
+        )
+        self.assertEqual(menu.size().width(), 228)
+        self.assertIsNotNone(menu.findChild(QFrame, "careMenuCard"))
+        self.assertIsNotNone(menu.findChild(QFrame, "menuSeparator"))
+        self.assertEqual(
+            [button.objectName() for button in menu.findChildren(QPushButton)],
+            ["careActionButton"] * 5 + ["utilityButton"] * 2,
+        )
+        self.assertIn(
+            "QPushButton#careActionButton:focus",
+            menu.action_buttons[0].styleSheet(),
         )
 
     def test_status_progress_bars_and_accessory_selector_are_named(self):
