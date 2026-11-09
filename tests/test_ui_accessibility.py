@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QApplication, QFrame, QPushButton
 from pixelpet.core.pet import Pet
 from pixelpet.ui.fun_windows import PetStatusWindow, TreatCatchWindow
 from pixelpet.ui.interaction_menu import InteractionMenu
+from pixelpet.ui.setup_window import SetupWindow
 
 
 class PetUiAccessibilityTests(unittest.TestCase):
@@ -50,6 +51,27 @@ class PetUiAccessibilityTests(unittest.TestCase):
             "QPushButton#careActionButton:focus",
             menu.action_buttons[0].styleSheet(),
         )
+
+    def test_setup_screen_labels_and_create_action(self):
+        if not hasattr(self, "windows"):
+            self.windows = []
+        window = SetupWindow()
+        self.windows.append(window)
+        created = []
+        window.set_setup_complete_callback(created.append)
+        window.name_input.setText("  Luna 2! ")
+        window.species_combo.setCurrentText("Frog")
+
+        self.assertEqual(window.name_input.accessibleName(), "Pet name")
+        self.assertEqual(window.species_combo.accessibleName(), "Pet species")
+        self.assertIsNotNone(window.findChild(QFrame, "setupCard"))
+        self.assertIsNotNone(window.findChild(QFrame, "personalityNote"))
+        self.assertIn("QPushButton#createPetButton:focus", window.styleSheet())
+        self.assertIsNotNone(window.findChild(QPushButton, "createPetButton"))
+
+        window.create_pet()
+
+        self.assertEqual(created, [{"name": "Luna 2", "species": "Frog"}])
 
     def test_status_progress_bars_and_accessory_selector_are_named(self):
         window = self.create_window(PetStatusWindow)
