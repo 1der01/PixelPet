@@ -5,7 +5,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from unittest.mock import patch
 
-from PySide6.QtWidgets import QApplication, QScrollArea, QMessageBox
+from PySide6.QtWidgets import QApplication, QComboBox, QScrollArea, QMessageBox
 
 from pixelpet.core.pet import Pet
 from pixelpet.ui.settings_window import SettingsWindow
@@ -81,6 +81,15 @@ class SettingsWindowTests(unittest.TestCase):
 
     def test_settings_content_is_scrollable(self):
         self.assertIsNotNone(self.window.findChild(QScrollArea))
+
+    def test_settings_window_has_grouped_light_theme_and_accessible_controls(self):
+        self.assertIn("QFrame#settingsCard", self.window.styleSheet())
+        self.assertIn("QLabel#settingsSection", self.window.styleSheet())
+        self.assertEqual(self.window.room_theme_combo.accessibleName(), "Room theme")
+        self.assertEqual(
+            self.window.transparency_slider.accessibleName(), "Pet transparency"
+        )
+        self.assertIsNotNone(self.window.findChild(QComboBox, "roomThemeCombo"))
 
     def test_successful_import_notifies_pet_reload_callback(self):
         callback = unittest.mock.Mock(return_value=True)

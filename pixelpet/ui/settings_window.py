@@ -30,69 +30,83 @@ class SettingsWindow(QWidget):
     DEFAULT_ROOM_FURNITURE = ["Bed", "Plant"]
     CHECKBOX_STYLE = """
         QCheckBox {
-            color: #ECF0F1;
+            color: #393243;
+            spacing: 9px;
         }
         QCheckBox:disabled {
-            color: #7F8C8D;
+            color: #938B9B;
         }
         QCheckBox::indicator {
             width: 20px;
             height: 20px;
         }
         QCheckBox::indicator:checked {
-            background-color: #3498DB;
-            border: 2px solid #3498DB;
+            background-color: #7352B8;
+            border: 2px solid #7352B8;
             border-radius: 4px;
         }
         QCheckBox::indicator:unchecked {
-            background-color: #34495E;
-            border: 2px solid #7F8C8D;
+            background-color: #FFFFFF;
+            border: 2px solid #BDB4C9;
             border-radius: 4px;
+        }
+        QCheckBox::indicator:focus {
+            border: 2px solid #302B3A;
         }
     """
     CHECKBOX_FURNITURE_STYLE = """
         QCheckBox {
-            color: #ECF0F1;
+            color: #393243;
         }
         QCheckBox:disabled {
-            color: #7F8C8D;
+            color: #938B9B;
         }
         QCheckBox::indicator {
             width: 16px;
             height: 16px;
         }
         QCheckBox::indicator:checked {
-            background-color: #3498DB;
-            border: 2px solid #3498DB;
+            background-color: #7352B8;
+            border: 2px solid #7352B8;
             border-radius: 3px;
         }
         QCheckBox::indicator:unchecked {
-            background-color: #34495E;
-            border: 2px solid #7F8C8D;
+            background-color: #FFFFFF;
+            border: 2px solid #BDB4C9;
             border-radius: 3px;
         }
     """
     COMBOBOX_STYLE = """
         QComboBox {
-            background-color: #34495E;
-            color: #ECF0F1;
-            border: 1px solid #7F8C8D;
-            border-radius: 6px;
-            padding: 8px;
+            background-color: #FFFFFF;
+            color: #302B3A;
+            border: 1px solid #CFC6D9;
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+        QComboBox:focus {
+            border: 2px solid #7352B8;
         }
     """
     SLIDER_STYLE = """
         QSlider::groove:horizontal {
-            height: 8px;
-            background: #34495E;
+            height: 7px;
+            background: #E7E1ED;
             border-radius: 4px;
         }
         QSlider::handle:horizontal {
-            background: #3498DB;
-            width: 18px;
-            height: 18px;
+            background: #7352B8;
+            border: 2px solid #FFFFFF;
+            width: 20px;
+            height: 20px;
             margin: -5px 0;
-            border-radius: 9px;
+            border-radius: 10px;
+        }
+        QSlider::handle:horizontal:hover {
+            background: #60429F;
+        }
+        QSlider::handle:horizontal:focus {
+            border: 2px solid #302B3A;
         }
     """
 
@@ -119,18 +133,26 @@ class SettingsWindow(QWidget):
     def _create_button(label_text, background_color, hover_color, callback=None):
         """Create a themed button."""
         button = QPushButton(label_text)
-        button.setFont(QFont("Arial", 10, QFont.Bold))
+        button.setFont(QFont("Segoe UI", 10, QFont.Bold))
         button.setStyleSheet(
             f"""
             QPushButton {{
                 background-color: {background_color};
                 color: white;
-                border: none;
-                border-radius: 8px;
-                padding: 10px;
+                border: 1px solid {background_color};
+                border-radius: 9px;
+                padding: 10px 12px;
             }}
             QPushButton:hover {{
                 background-color: {hover_color};
+                border-color: {hover_color};
+            }}
+            QPushButton:focus {{
+                border: 2px solid #302B3A;
+            }}
+            QPushButton:pressed {{
+                padding-top: 11px;
+                padding-bottom: 9px;
             }}
             """
         )
@@ -169,28 +191,69 @@ class SettingsWindow(QWidget):
     def setup_ui(self):
         """Setup the settings window UI."""
         self.setWindowTitle("PixelPet Settings")
+        self.setObjectName("settingsWindow")
         self.resize(400, 500)
         self.setMinimumSize(360, 400)
+        self.setStyleSheet(
+            """
+            QWidget#settingsWindow {
+                background-color: #F6F3EE;
+                color: #302B3A;
+            }
+            QFrame#settingsCard {
+                background-color: #FFFFFF;
+                border: 1px solid #E5DFD7;
+                border-radius: 16px;
+            }
+            QLabel#settingsTitle {
+                color: #302B3A;
+                font-size: 21px;
+                font-weight: 700;
+            }
+            QLabel#settingsSubtitle {
+                color: #71687B;
+            }
+            QLabel#settingsSection {
+                color: #51465F;
+                font-weight: 700;
+                padding-top: 5px;
+            }
+            QLabel#settingsField {
+                color: #51465F;
+                font-weight: 600;
+            }
+            QScrollArea {
+                background: transparent;
+            }
+            """
+        )
 
         container = QFrame()
+        container.setObjectName("settingsCard")
         container.setStyleSheet(
             """
-            QFrame {
-                background-color: #2C3E50;
-                border-radius: 15px;
-            }
+            QFrame#settingsCard { background-color: #FFFFFF; }
         """
         )
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(12)
 
         title = QLabel("Settings")
-        title.setFont(QFont("Arial", 18, QFont.Bold))
-        title.setStyleSheet("color: #ECF0F1;")
+        title.setObjectName("settingsTitle")
+        title.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
+
+        subtitle = QLabel("Make PixelPet feel just right.")
+        subtitle.setObjectName("settingsSubtitle")
+        subtitle.setAlignment(Qt.AlignCenter)
+        layout.addWidget(subtitle)
+
+        desktop_heading = QLabel("Desktop")
+        desktop_heading.setObjectName("settingsSection")
+        layout.addWidget(desktop_heading)
 
         self.always_on_top_cb = self._create_checkbox(
             "Always on Top", self.settings.get("always_on_top", True)
@@ -220,12 +283,18 @@ class SettingsWindow(QWidget):
         )
         layout.addWidget(self.notifications_cb)
 
+        room_heading = QLabel("Pet's Room")
+        room_heading.setObjectName("settingsSection")
+        layout.addWidget(room_heading)
+
         room_theme_label = QLabel("Room Theme:")
-        room_theme_label.setFont(QFont("Arial", 10, QFont.Bold))
-        room_theme_label.setStyleSheet("color: #ECF0F1;")
+        room_theme_label.setObjectName("settingsField")
+        room_theme_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
         layout.addWidget(room_theme_label)
 
         self.room_theme_combo = QComboBox()
+        self.room_theme_combo.setObjectName("roomThemeCombo")
+        self.room_theme_combo.setAccessibleName("Room theme")
         self.room_theme_combo.addItems(SettingsManager.ROOM_THEME_OPTIONS)
         current_theme = self.settings.get("room_theme", "Cozy")
         if current_theme in SettingsManager.ROOM_THEME_OPTIONS:
@@ -233,11 +302,12 @@ class SettingsWindow(QWidget):
         else:
             self.room_theme_combo.setCurrentText("Cozy")
         self.room_theme_combo.setStyleSheet(self.COMBOBOX_STYLE)
+        room_theme_label.setBuddy(self.room_theme_combo)
         layout.addWidget(self.room_theme_combo)
 
         room_furniture_label = QLabel("Room Furniture:")
-        room_furniture_label.setFont(QFont("Arial", 10, QFont.Bold))
-        room_furniture_label.setStyleSheet("color: #ECF0F1;")
+        room_furniture_label.setObjectName("settingsField")
+        room_furniture_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
         layout.addWidget(room_furniture_label)
 
         self.room_furniture_checks = {}
@@ -264,9 +334,13 @@ class SettingsWindow(QWidget):
         for item, checkbox in self.room_furniture_checks.items():
             checkbox.setChecked(item in current_furniture)
 
+        appearance_heading = QLabel("Appearance")
+        appearance_heading.setObjectName("settingsSection")
+        layout.addWidget(appearance_heading)
+
         transparency_label = QLabel("Pet Transparency:")
-        transparency_label.setFont(QFont("Arial", 10, QFont.Bold))
-        transparency_label.setStyleSheet("color: #ECF0F1;")
+        transparency_label.setObjectName("settingsField")
+        transparency_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
         layout.addWidget(transparency_label)
 
         self.transparency_slider = QSlider(Qt.Horizontal)
@@ -277,11 +351,12 @@ class SettingsWindow(QWidget):
         self.transparency_slider.setRange(50, 255)
         self.transparency_slider.setValue(int(self.settings.get("pet_transparency", 255)))
         self.transparency_slider.setStyleSheet(self.SLIDER_STYLE)
+        transparency_label.setBuddy(self.transparency_slider)
         layout.addWidget(self.transparency_slider)
 
         anim_label = QLabel("Animation Intensity:")
-        anim_label.setFont(QFont("Arial", 10, QFont.Bold))
-        anim_label.setStyleSheet("color: #ECF0F1;")
+        anim_label.setObjectName("settingsField")
+        anim_label.setFont(QFont("Segoe UI", 10, QFont.Bold))
         layout.addWidget(anim_label)
 
         self.anim_slider = QSlider(Qt.Horizontal)
@@ -292,9 +367,14 @@ class SettingsWindow(QWidget):
         self.anim_slider.setRange(0, 200)
         self.anim_slider.setValue(int(float(self.settings.get("animation_intensity", 1.0)) * 100))
         self.anim_slider.setStyleSheet(self.SLIDER_STYLE)
+        anim_label.setBuddy(self.anim_slider)
         layout.addWidget(self.anim_slider)
 
         layout.addSpacing(20)
+
+        save_heading = QLabel("Save Data")
+        save_heading.setObjectName("settingsSection")
+        layout.addWidget(save_heading)
 
         backup_row = QHBoxLayout()
         backup_btn = self._create_button("Backup Save", "#8E44AD", "#7D3C98")
